@@ -1,0 +1,7 @@
+cd backend
+venv\Scripts\activate
+python app.py
+http://127.0.0.1:5000 
+1.Admin
+2.Teacher
+3.student
