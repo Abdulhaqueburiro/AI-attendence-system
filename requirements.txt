@@ -1,0 +1,8 @@
+flask
+opencv-contrib-python-headless
+mediapipe
+PyJWT
+werkzeug
+mysql-connector-python
+numpy
+anthropic
