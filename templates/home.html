@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Attendance System · CS Department, QUEST</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#08070D;
+    --glow-purple:#7C3AED;
+    --glow-violet:#A855F7;
+    --accent-green:#4AFF7A;
+    --accent-green-deep:#22C55E;
+    --glass:rgba(255,255,255,0.05);
+    --glass-border:rgba(255,255,255,0.12);
+    --text-primary:#F4F2FA;
+    --text-muted:#A6A0B8;
+    --error:#FF5C7A;
+    --warning:#FBBF6B;
+    --info:#8B7CF6;
+  }
+
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+
+  body{
+    background:var(--bg);
+    color:var(--text-primary);
+    font-family:'Inter', sans-serif;
+    overflow-x:hidden;
+  }
+
+  section{scroll-margin-top:84px;}
+
+  img{max-width:100%; display:block; border-radius:18px;}
+
+  /* ---------- Background atmosphere ---------- */
+  .bg-glow{position:fixed; inset:0; z-index:-2; pointer-events:none;}
+  .bg-glow::before, .bg-glow::after{
+    content:""; position:absolute; width:55vw; height:55vw; border-radius:50%;
+    filter:blur(110px); opacity:0.28;
+  }
+  .bg-glow::before{background:var(--glow-purple); top:-15%; right:-15%;}
+  .bg-glow::after{background:var(--accent-green-deep); bottom:10%; left:-20%; opacity:0.14;}
+  .bg-grid{
+    position:fixed; inset:0; z-index:-1;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+    background-size:46px 46px;
+    mask-image:radial-gradient(circle at 50% 0%, rgba(0,0,0,0.9), transparent 70%);
+  }
+
+  .wrap{max-width:1120px; margin:0 auto; padding:0 28px;}
+
+  /* ---------- Navbar ---------- */
+  .navbar{
+    position:fixed; top:0; left:0; right:0; z-index:100;
+    padding:16px 0;
+    transition:background 0.3s ease, border-color 0.3s ease, backdrop-filter 0.3s ease;
+    border-bottom:1px solid transparent;
+  }
+  .navbar.scrolled{
+    background:rgba(8,7,13,0.75);
+    backdrop-filter:blur(14px);
+    border-bottom-color:var(--glass-border);
+  }
+  .navbar-inner{display:flex; align-items:center; justify-content:space-between;}
+  .brand{display:flex; align-items:center; gap:10px;}
+  .brand-mark{
+    width:36px; height:36px; border-radius:10px; flex-shrink:0;
+    background:linear-gradient(135deg, var(--glow-purple), var(--accent-green-deep));
+    display:flex; align-items:center; justify-content:center;
+  }
+  .brand-mark svg{width:19px; height:19px; color:#08070D;}
+  .brand-text{font-family:'Manrope', sans-serif; font-weight:700; font-size:14.5px;}
+  .brand-text span{display:block; font-size:11px; color:var(--text-muted); font-weight:500; font-family:'Inter',sans-serif;}
+
+  .nav-links{display:flex; align-items:center; gap:30px;}
+  .nav-links a{
+    color:var(--text-muted); text-decoration:none; font-size:13.5px; font-weight:600;
+    position:relative; padding:4px 0;
+  }
+  .nav-links a::after{
+    content:""; position:absolute; left:0; bottom:-2px; height:2px; width:0;
+    background:var(--accent-green); transition:width 0.2s ease;
+  }
+  .nav-links a:hover{color:var(--text-primary);}
+  .nav-links a:hover::after{width:100%;}
+
+  .nav-actions{display:flex; align-items:center; gap:10px;}
+  .btn-pill{
+    font-family:'Manrope', sans-serif; font-weight:700; font-size:13px;
+    padding:9px 17px; border-radius:999px; text-decoration:none;
+    transition:transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    display:inline-flex; align-items:center; gap:6px;
+  }
+  .btn-ghost{color:var(--text-primary); background:var(--glass); border:1px solid var(--glass-border);}
+  .btn-ghost:hover{background:rgba(255,255,255,0.1);}
+  .btn-solid{
+    color:#06170C;
+    background:linear-gradient(135deg, var(--accent-green), var(--accent-green-deep));
+    border:none;
+    box-shadow:0 8px 22px -8px rgba(74,255,122,0.55);
+  }
+  .btn-solid:hover{transform:translateY(-1px); box-shadow:0 12px 28px -8px rgba(74,255,122,0.7);}
+
+  .nav-toggle{display:none; background:none; border:none; color:var(--text-primary); cursor:pointer;}
+  .nav-toggle svg{width:24px; height:24px;}
+
+  /* ---------- Hero ---------- */
+  .hero{padding:160px 0 100px; position:relative;}
+  .hero-grid{display:grid; grid-template-columns:1.1fr 0.9fr; gap:50px; align-items:center;}
+
+  .eyebrow{
+    display:inline-flex; align-items:center; gap:8px;
+    background:var(--glass); border:1px solid var(--glass-border);
+    border-radius:999px; padding:7px 15px 7px 11px;
+    font-size:12.5px; font-weight:600; color:var(--accent-green);
+    margin-bottom:22px;
+  }
+  .eyebrow svg{width:14px; height:14px;}
+  .eyebrow .live-dot{
+    width:6px; height:6px; border-radius:50%; background:var(--accent-green);
+    box-shadow:0 0 8px var(--accent-green); animation:pulse-dot 1.6s ease-in-out infinite;
+  }
+
+  h1.hero-title{
+    font-family:'Manrope', sans-serif; font-weight:800;
+    font-size:clamp(34px, 5vw, 52px); line-height:1.08; letter-spacing:-0.5px;
+    margin-bottom:18px;
+  }
+  h1.hero-title .glow{color:var(--accent-green); text-shadow:0 0 22px rgba(74,255,122,0.4);}
+
+  .hero-sub{font-size:16px; color:var(--text-muted); max-width:480px; margin-bottom:30px; line-height:1.6;}
+
+  .hero-ctas{display:flex; gap:14px; flex-wrap:wrap; margin-bottom:34px;}
+  .btn-cta{
+    font-family:'Manrope', sans-serif; font-weight:700; font-size:14.5px;
+    padding:14px 22px; border-radius:13px; text-decoration:none;
+    display:inline-flex; align-items:center; gap:9px;
+    transition:transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .btn-cta svg{width:17px; height:17px;}
+  .btn-cta.primary{
+    color:#06170C; background:linear-gradient(135deg, var(--accent-green), var(--accent-green-deep));
+    box-shadow:0 12px 30px -10px rgba(74,255,122,0.55);
+  }
+  .btn-cta.primary:hover{transform:translateY(-2px); box-shadow:0 16px 36px -10px rgba(74,255,122,0.7);}
+  .btn-cta.secondary{color:var(--text-primary); background:var(--glass); border:1px solid var(--glass-border);}
+  .btn-cta.secondary:hover{transform:translateY(-2px); background:rgba(255,255,255,0.1);}
+
+  .trust-row{display:flex; gap:22px; flex-wrap:wrap;}
+  .trust-item{display:flex; align-items:center; gap:8px; font-size:12.5px; color:var(--text-muted); font-weight:600;}
+  .trust-item svg{width:15px; height:15px; color:var(--accent-green);}
+
+  .hero-visual{position:relative;}
+  .hero-visual .frame{
+    border-radius:22px; padding:12px;
+    background:linear-gradient(160deg, rgba(124,58,237,0.35), rgba(74,255,122,0.18));
+  }
+  .hero-visual .frame img{border-radius:14px; aspect-ratio:4/3.2; object-fit:cover; width:100%;}
+  .hero-visual .badge{
+    position:absolute; display:flex; align-items:center; gap:9px;
+    background:rgba(13,12,20,0.85); backdrop-filter:blur(10px);
+    border:1px solid var(--glass-border); border-radius:13px;
+    padding:9px 13px; font-size:12px; box-shadow:0 10px 26px rgba(0,0,0,0.4);
+  }
+  .hero-visual .badge.b1{top:-16px; left:-14px;}
+  .hero-visual .badge.b2{bottom:-16px; right:-14px;}
+  .hero-visual .badge .icon-chip{
+    width:26px; height:26px; border-radius:8px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    background:rgba(74,255,122,0.18); color:var(--accent-green);
+  }
+  .hero-visual .badge.b1 .icon-chip{background:rgba(124,58,237,0.25); color:var(--glow-violet);}
+  .hero-visual .badge .icon-chip svg{width:14px; height:14px;}
+  .hero-visual .badge .label{color:var(--text-muted); font-size:10px;}
+  .hero-visual .badge .value{font-weight:700; font-size:12px;}
+
+  /* ---------- Section heading ---------- */
+  .section-pad{padding:90px 0;}
+  .section-head{max-width:620px; margin-bottom:54px;}
+  .section-eyebrow{
+    font-size:12.5px; font-weight:700; letter-spacing:1px; text-transform:uppercase;
+    color:var(--accent-green); margin-bottom:12px;
+  }
+  .section-title{font-family:'Manrope', sans-serif; font-weight:800; font-size:clamp(26px, 3.5vw, 36px); margin-bottom:12px;}
+  .section-desc{color:var(--text-muted); font-size:15px; line-height:1.6;}
+
+  /* ---------- How it works diagram ---------- */
+  .flow{display:flex; align-items:stretch; gap:0; overflow-x:auto; padding-bottom:8px;}
+  .flow-step{
+    flex:1; min-width:190px;
+    background:var(--glass); border:1px solid var(--glass-border);
+    border-radius:16px; padding:22px 18px;
+    position:relative;
+    transition:transform 0.2s ease, border-color 0.2s ease;
+  }
+  .flow-step:hover{transform:translateY(-4px); border-color:rgba(74,255,122,0.35);}
+  .flow-icon{
+    width:42px; height:42px; border-radius:12px; margin-bottom:14px;
+    background:linear-gradient(135deg, rgba(124,58,237,0.3), rgba(74,255,122,0.18));
+    display:flex; align-items:center; justify-content:center;
+  }
+  .flow-icon svg{width:21px; height:21px; color:var(--accent-green);}
+  .flow-step-title{font-family:'Manrope', sans-serif; font-weight:700; font-size:14.5px; margin-bottom:6px;}
+  .flow-step-desc{font-size:12.5px; color:var(--text-muted); line-height:1.5;}
+  .flow-connector{
+    flex:0 0 36px; display:flex; align-items:center; justify-content:center;
+    position:relative;
+  }
+  .flow-connector svg{width:20px; height:20px; color:var(--text-muted); opacity:0.5;}
+  .flow-connector .pulse-dot{
+    position:absolute; width:5px; height:5px; border-radius:50%;
+    background:var(--accent-green); box-shadow:0 0 8px var(--accent-green);
+    animation:travel 3.5s linear infinite;
+  }
+
+  @media (max-width:880px){
+    .flow{flex-direction:column;}
+    .flow-connector{flex:0 0 30px; transform:rotate(90deg);}
+  }
+
+  /* ---------- Guide sections (students / teachers) ---------- */
+  .guide-block{display:grid; grid-template-columns:0.85fr 1.15fr; gap:50px; align-items:center;}
+  .guide-block.reverse{grid-template-columns:1.15fr 0.85fr;}
+  .guide-block.reverse .guide-media{order:2;}
+  .guide-media .frame{
+    border-radius:20px; padding:10px;
+    background:linear-gradient(160deg, rgba(124,58,237,0.3), rgba(74,255,122,0.15));
+  }
+  .guide-media img{border-radius:13px; aspect-ratio:5/4; object-fit:cover; width:100%;}
+
+  .guide-tag{
+    display:inline-flex; align-items:center; gap:7px;
+    background:var(--glass); border:1px solid var(--glass-border); border-radius:999px;
+    padding:6px 13px 6px 9px; font-size:12px; font-weight:600; color:var(--info);
+    margin-bottom:16px;
+  }
+  .guide-tag svg{width:13px; height:13px;}
+  .guide-title{font-family:'Manrope', sans-serif; font-weight:800; font-size:26px; margin-bottom:12px;}
+  .guide-desc{color:var(--text-muted); font-size:14.5px; line-height:1.6; margin-bottom:24px;}
+
+  .step-list{list-style:none; margin-bottom:26px;}
+  .step-list li{
+    display:flex; gap:14px; padding:13px 0;
+    border-top:1px solid var(--glass-border);
+  }
+  .step-list li:first-child{border-top:none;}
+  .step-num{
+    width:26px; height:26px; border-radius:8px; flex-shrink:0;
+    background:rgba(74,255,122,0.12); color:var(--accent-green);
+    font-family:'Manrope', sans-serif; font-weight:800; font-size:12px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .step-text-title{font-weight:700; font-size:13.5px; margin-bottom:2px;}
+  .step-text-desc{font-size:12.5px; color:var(--text-muted); line-height:1.5;}
+
+  .rule-callout{
+    background:rgba(139,124,246,0.08); border:1px solid rgba(139,124,246,0.25);
+    border-radius:14px; padding:16px 18px;
+  }
+  .rule-callout-title{
+    display:flex; align-items:center; gap:8px;
+    font-weight:700; font-size:13px; color:var(--info); margin-bottom:10px;
+  }
+  .rule-callout-title svg{width:15px; height:15px;}
+  .rule-callout ul{list-style:none;}
+  .rule-callout li{
+    font-size:12.5px; color:var(--text-muted); line-height:1.6;
+    padding-left:18px; position:relative; margin-bottom:6px;
+  }
+  .rule-callout li::before{
+    content:""; position:absolute; left:0; top:7px; width:6px; height:6px;
+    border-radius:50%; background:var(--info);
+  }
+
+  /* ---------- Rules & Regulations ---------- */
+  .policy-grid{display:grid; grid-template-columns:repeat(3, 1fr); gap:18px;}
+  .policy-card{
+    background:var(--glass); border:1px solid var(--glass-border);
+    border-radius:18px; padding:26px 24px;
+    transition:transform 0.2s ease, border-color 0.2s ease;
+  }
+  .policy-card:hover{transform:translateY(-4px); border-color:rgba(74,255,122,0.3);}
+  .policy-icon{
+    width:44px; height:44px; border-radius:12px; margin-bottom:16px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .policy-icon svg{width:22px; height:22px;}
+  .policy-card.safe .policy-icon{background:rgba(74,255,122,0.15); color:var(--accent-green);}
+  .policy-card.condo .policy-icon{background:rgba(251,191,107,0.15); color:var(--warning);}
+  .policy-card.danger .policy-icon{background:rgba(255,92,122,0.15); color:var(--error);}
+  .policy-card-title{font-family:'Manrope', sans-serif; font-weight:700; font-size:15px; margin-bottom:4px;}
+  .policy-card-pct{font-family:'Manrope', sans-serif; font-weight:800; font-size:26px; margin-bottom:10px;}
+  .policy-card.safe .policy-card-pct{color:var(--accent-green);}
+  .policy-card.condo .policy-card-pct{color:var(--warning);}
+  .policy-card.danger .policy-card-pct{color:var(--error);}
+  .policy-card-desc{font-size:12.5px; color:var(--text-muted); line-height:1.6;}
+
+  .policy-list-section{margin-top:40px;}
+  .policy-list-title{
+    font-family:'Manrope', sans-serif; font-weight:700; font-size:15px;
+    display:flex; align-items:center; gap:9px; margin-bottom:16px;
+  }
+  .policy-list-title svg{width:17px; height:17px; color:var(--accent-green);}
+  .policy-list{list-style:none; margin-bottom:30px;}
+  .policy-list li{
+    display:flex; gap:12px; padding:11px 0;
+    border-top:1px solid var(--glass-border);
+    font-size:13.5px; color:var(--text-muted); line-height:1.6;
+  }
+  .policy-list li:first-child{border-top:none;}
+  .policy-list svg{width:15px; height:15px; color:var(--accent-green); flex-shrink:0; margin-top:1px;}
+
+  /* ---------- Footer ---------- */
+  .footer{border-top:1px solid var(--glass-border); padding:40px 0; margin-top:40px;}
+  .footer-inner{display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;}
+  .footer-text{font-size:12.5px; color:var(--text-muted);}
+
+  /* ---------- Scroll reveal ---------- */
+  .reveal{opacity:0; transform:translateY(18px); transition:opacity 0.6s ease, transform 0.6s ease;}
+  .reveal.visible{opacity:1; transform:translateY(0);}
+
+  @keyframes pulse-dot{0%,100%{opacity:1;} 50%{opacity:0.35;}}
+  @keyframes travel{
+    0%{left:0; opacity:0;}
+    10%{opacity:1;}
+    90%{opacity:1;}
+    100%{left:100%; opacity:0;}
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation:none !important; transition:none !important;}
+    .reveal{opacity:1; transform:none;}
+  }
+
+  /* ---------- Responsive ---------- */
+  @media (max-width:900px){
+    .hero-grid{grid-template-columns:1fr; gap:40px;}
+    .hero-visual{order:-1;}
+    .guide-block, .guide-block.reverse{grid-template-columns:1fr;}
+    .guide-block.reverse .guide-media{order:0;}
+    .policy-grid{grid-template-columns:1fr;}
+  }
+  @media (max-width:760px){
+    .nav-links{display:none;}
+    .nav-toggle{display:block;}
+    .nav-actions .btn-ghost{display:none;}
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-glow"></div>
+<div class="bg-grid"></div>
+
+<!-- ===================== NAVBAR ===================== -->
+<nav class="navbar" id="navbar">
+  <div class="wrap navbar-inner">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 3 7l9 5 9-5-9-5Z"/><path d="M3 12l9 5 9-5"/></svg>
+      </div>
+      <div class="brand-text">AI Attendance<span>CS Department · QUEST</span></div>
+    </div>
+
+    <div class="nav-links">
+      <a href="#how-it-works">How it Works</a>
+      <a href="#for-students">For Students</a>
+      <a href="#for-teachers">For Teachers</a>
+      <a href="#rules">Rules</a>
+    </div>
+
+    <div class="nav-actions">
+      <a href="/student/login" class="btn-pill btn-ghost">Student Login</a>
+      <a href="/teacher/login" class="btn-pill btn-solid">Teacher Login</a>
+    </div>
+
+    <button class="nav-toggle" id="navToggle" aria-label="Menu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
+  </div>
+</nav>
+
+<!-- ===================== HERO ===================== -->
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <div class="eyebrow reveal">
+        <span class="live-dot"></span>
+        AI-Powered · Face Recognition + Liveness
+      </div>
+      <h1 class="hero-title reveal">Attendance, <span class="glow">verified by your face.</span></h1>
+      <p class="hero-sub reveal">
+        A face recognition attendance system built for the Computer Science Department at QUEST, Nawabshah.
+        No paper sheets, no proxies — just a quick, secure face scan that checks liveness before marking anyone present.
+      </p>
+      <div class="hero-ctas reveal">
+        <a href="/student/register" class="btn-cta primary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>
+          I'm a Student
+        </a>
+        <a href="/teacher/register" class="btn-cta secondary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          I'm a Teacher
+        </a>
+      </div>
+      <div class="trust-row reveal">
+        <div class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></svg> Liveness Verified</div>
+        <div class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg> Real-Time Dashboard</div>
+        <div class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11a3 3 0 1 0 6 0a3 3 0 1 0-6 0"/><path d="M17.5 17.5c-1.5-2-3.5-3-5.5-3s-4 1-5.5 3"/></svg> No Proxy Attendance</div>
+      </div>
+    </div>
+
+    <div class="hero-visual reveal">
+      <div class="frame">
+        <!-- Replace with a photo of a student checking in with a laptop/phone camera, or a classroom scene -->
+      <img src="/static/images/scan-demo.png" alt="Student checking in with face scan">
+      </div>
+      <div class="badge b1">
+        <div class="icon-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7Z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg></div>
+        <div><div class="label">Check-in time</div><div class="value">~3 seconds</div></div>
+      </div>
+      <div class="badge b2">
+        <div class="icon-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8.5 12.5 2.5 2.5 4.5-5"/></svg></div>
+        <div><div class="label">Status</div><div class="value">Present · Verified</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== HOW IT WORKS ===================== -->
+<section class="section-pad" id="how-it-works">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <div class="section-eyebrow">How it Works</div>
+      <h2 class="section-title">From check-in to dashboard, in five steps.</h2>
+      <p class="section-desc">Each lecture follows the same simple flow — built so attendance can't be faked, and no one has to manage a register by hand.</p>
+    </div>
+
+    <div class="flow reveal">
+      <div class="flow-step">
+        <div class="flow-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg></div>
+        <div class="flow-step-title">Register &amp; Enroll</div>
+        <div class="flow-step-desc">Student creates an account and enrolls their face — a one-time, few-second setup.</div>
+      </div>
+      <div class="flow-connector">
+        <span class="pulse-dot"></span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </div>
+      <div class="flow-step">
+        <div class="flow-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg></div>
+        <div class="flow-step-title">Teacher Starts Lecture</div>
+        <div class="flow-step-desc">A unique check-in link is generated and shared with the class.</div>
+      </div>
+      <div class="flow-connector">
+        <span class="pulse-dot" style="animation-delay:0.7s;"></span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </div>
+      <div class="flow-step">
+        <div class="flow-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></svg></div>
+        <div class="flow-step-title">Scan &amp; Verify</div>
+        <div class="flow-step-desc">Student opens the link and scans their face — a natural blink confirms it's really them, live.</div>
+      </div>
+      <div class="flow-connector">
+        <span class="pulse-dot" style="animation-delay:1.4s;"></span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </div>
+      <div class="flow-step">
+        <div class="flow-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+        <div class="flow-step-title">Recorded Instantly</div>
+        <div class="flow-step-desc">Attendance is saved the moment both checks pass — no manual entry.</div>
+      </div>
+      <div class="flow-connector">
+        <span class="pulse-dot" style="animation-delay:2.1s;"></span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </div>
+      <div class="flow-step">
+        <div class="flow-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg></div>
+        <div class="flow-step-title">Track on Dashboard</div>
+        <div class="flow-step-desc">Both teacher and student see live counts, percentages, and eligibility status.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== FOR STUDENTS ===================== -->
+<section class="section-pad" id="for-students">
+  <div class="wrap">
+    <div class="guide-block reveal">
+      <div class="guide-media">
+        <div class="frame">
+          <!-- Replace with a photo of a student using a phone/laptop, ideally in a classroom setting -->
+         <img src="static/images/student.png" alt="Student using laptop" />
+        </div>
+      </div>
+      <div>
+        <div class="guide-tag">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>
+          For Students
+        </div>
+        <h3 class="guide-title">Check in with a glance.</h3>
+        <p class="guide-desc">Set up once, then mark attendance in seconds for every lecture — no app to install, just your browser.</p>
+
+        <ul class="step-list">
+          <li>
+            <div class="step-num">1</div>
+            <div><div class="step-text-title">Create your account</div><div class="step-text-desc">Sign up with your name, roll number, and department.</div></div>
+          </li>
+          <li>
+            <div class="step-num">2</div>
+            <div><div class="step-text-title">Enroll your face</div><div class="step-text-desc">A one-time camera setup — turn your head slowly for about 5 seconds.</div></div>
+          </li>
+          <li>
+            <div class="step-num">3</div>
+            <div><div class="step-text-title">Open your teacher's link</div><div class="step-text-desc">Shared in your class group at the start of each lecture.</div></div>
+          </li>
+          <li>
+            <div class="step-num">4</div>
+            <div><div class="step-text-title">Scan and blink naturally</div><div class="step-text-desc">The system checks your face and confirms you're really there.</div></div>
+          </li>
+          <li>
+            <div class="step-num">5</div>
+            <div><div class="step-text-title">Check your dashboard</div><div class="step-text-desc">See your attendance percentage and eligibility status anytime.</div></div>
+          </li>
+        </ul>
+
+        <div class="rule-callout">
+          <div class="rule-callout-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.86 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.86a2 2 0 0 0-3.4 0Z"/></svg>
+            Rules for Students
+          </div>
+          <ul>
+            <li>Your account and face enrollment are yours alone — never check in for someone else.</li>
+            <li>Keep your face clearly visible during scans: no mask, sunglasses, or photos held up to the camera.</li>
+            <li>A live blink is required every time — still images won't be accepted.</li>
+            <li>You're responsible for enrolling in the correct courses from your dashboard.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== FOR TEACHERS ===================== -->
+<section class="section-pad" id="for-teachers">
+  <div class="wrap">
+    <div class="guide-block reverse reveal">
+      <div>
+        <div class="guide-tag">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          For Teachers
+        </div>
+        <h3 class="guide-title">Run attendance without the register.</h3>
+        <p class="guide-desc">Start a lecture, share one link, and watch attendance fill in live — no headcounts, no sign-in sheets.</p>
+
+        <ul class="step-list">
+          <li>
+            <div class="step-num">1</div>
+            <div><div class="step-text-title">Create your faculty account</div><div class="step-text-desc">Sign up with your name, email, and department.</div></div>
+          </li>
+          <li>
+            <div class="step-num">2</div>
+            <div><div class="step-text-title">Add your courses</div><div class="step-text-desc">From your dashboard, add each course you teach with its code.</div></div>
+          </li>
+          <li>
+            <div class="step-num">3</div>
+            <div><div class="step-text-title">Start a lecture</div><div class="step-text-desc">One click generates a unique check-in link for that session.</div></div>
+          </li>
+          <li>
+            <div class="step-num">4</div>
+            <div><div class="step-text-title">Share the link</div><div class="step-text-desc">Post it in your class group or display it for students to open.</div></div>
+          </li>
+          <li>
+            <div class="step-num">5</div>
+            <div><div class="step-text-title">Finalize at the end</div><div class="step-text-desc">One click checks everyone's running percentage and flags anyone below the threshold.</div></div>
+          </li>
+        </ul>
+
+        <div class="rule-callout">
+          <div class="rule-callout-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.86 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.86a2 2 0 0 0-3.4 0Z"/></svg>
+            Rules for Teachers
+          </div>
+          <ul>
+            <li>Start the lecture link only when the class actually begins, and close it once attendance is taken.</li>
+            <li>Finalize attendance after every lecture so eligibility stays accurate for your students.</li>
+            <li>Review flagged students periodically — they're notified automatically, but a conversation still helps.</li>
+            <li>Each course you create is visible only on your own dashboard.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="guide-media">
+        <div class="frame">
+          <!-- Replace with a photo of a teacher in a classroom with a laptop/tablet -->
+          <img src="/static/images/image.png" alt="Teacher monitoring attendance dashboard">
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== RULES & REGULATIONS ===================== -->
+<section class="section-pad" id="rules">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <div class="section-eyebrow">Policy</div>
+      <h2 class="section-title">Rules &amp; Regulations</h2>
+      <p class="section-desc">The attendance policy applied across every course, calculated automatically from your check-in history.</p>
+    </div>
+
+    <div class="policy-grid reveal">
+      <div class="policy-card safe">
+        <div class="policy-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8.5 12.5 2.5 2.5 4.5-5"/></svg></div>
+        <div class="policy-card-title">Eligible</div>
+        <div class="policy-card-pct">75% and above</div>
+        <div class="policy-card-desc">Attendance meets the requirement. No action needed.</div>
+      </div>
+      <div class="policy-card condo">
+        <div class="policy-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.86 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.86a2 2 0 0 0-3.4 0Z"/></svg></div>
+        <div class="policy-card-title">Condonation</div>
+        <div class="policy-card-pct">65% – 74.9%</div>
+        <div class="policy-card-desc">Below the requirement, in the provisional zone. Improve attendance promptly.</div>
+      </div>
+      <div class="policy-card danger">
+        <div class="policy-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6M9 9l6 6"/></svg></div>
+        <div class="policy-card-title">Not Eligible</div>
+        <div class="policy-card-pct">Below 65%</div>
+        <div class="policy-card-desc">Not eligible for the final exam in that course under current policy.</div>
+      </div>
+    </div>
+
+    <div class="policy-list-section reveal">
+      <div class="policy-list-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></svg>
+        Conduct &amp; Integrity
+      </div>
+      <ul class="policy-list">
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Attendance must be marked in person, by the enrolled student, at the time of the lecture.</li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Attempting to mark attendance using another person's photo, video, or account is a violation of academic integrity.</li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> The liveness (blink) check exists specifically to prevent the above — still photos and screen replays are rejected.</li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Each student enrolls one face profile; re-enrollment should only happen for genuine setup issues.</li>
+      </ul>
+
+      <div class="policy-list-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7Z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+        Technical Requirements
+      </div>
+      <ul class="policy-list">
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> A device with a working camera and a stable internet or campus network connection.</li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Good, even lighting during enrollment and check-in for reliable face matching.</li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Camera permission must be allowed in the browser when prompted.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== FOOTER ===================== -->
+<footer class="footer">
+  <div class="wrap footer-inner">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 3 7l9 5 9-5-9-5Z"/><path d="M3 12l9 5 9-5"/></svg>
+      </div>
+      <div class="brand-text">AI Attendance<span>CS Department · QUEST, Nawabshah</span></div>
+    </div>
+    <div class="footer-text">Final Year Project · Built with Flask, MySQL, OpenCV &amp; Mediapipe</div>
+  </div>
+</footer>
+
+<script>
+  // Navbar background on scroll
+  const navbar = document.getElementById('navbar');
+  window.addEventListener('scroll', () => {
+    navbar.classList.toggle('scrolled', window.scrollY > 20);
+  });
+
+  // Scroll reveal
+  const revealEls = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) entry.target.classList.add('visible');
+    });
+  }, { threshold: 0.15 });
+  revealEls.forEach(el => observer.observe(el));
+
+  // Mobile nav toggle (simple show/hide of links as a dropdown)
+  const navToggle = document.getElementById('navToggle');
+  const navLinks = document.querySelector('.nav-links');
+  navToggle.addEventListener('click', () => {
+    const isOpen = navLinks.style.display === 'flex';
+    navLinks.style.display = isOpen ? 'none' : 'flex';
+    navLinks.style.position = 'absolute';
+    navLinks.style.top = '64px';
+    navLinks.style.left = '0';
+    navLinks.style.right = '0';
+    navLinks.style.flexDirection = 'column';
+    navLinks.style.background = 'rgba(8,7,13,0.95)';
+    navLinks.style.padding = '20px 28px';
+    navLinks.style.gap = '18px';
+    navLinks.style.borderBottom = '1px solid var(--glass-border)';
+  });
+</script>
+
+</body>
+</html>

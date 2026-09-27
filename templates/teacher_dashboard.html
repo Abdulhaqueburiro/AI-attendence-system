@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Teacher Dashboard · Attendance System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#08070D;
+    --glow-purple:#7C3AED;
+    --glow-violet:#A855F7;
+    --accent-green:#4AFF7A;
+    --accent-green-deep:#22C55E;
+    --glass:rgba(255,255,255,0.05);
+    --glass-border:rgba(255,255,255,0.12);
+    --text-primary:#F4F2FA;
+    --text-muted:#A6A0B8;
+    --error:#FF5C7A;
+    --info:#8B7CF6;
+  }
+
+  *{box-sizing:border-box; margin:0; padding:0;}
+
+  body{
+    background:var(--bg);
+    color:var(--text-primary);
+    font-family:'Inter', sans-serif;
+    min-height:100vh;
+    overflow-x:hidden;
+    position:relative;
+  }
+
+  .bg-glow{position:fixed; inset:0; z-index:0; pointer-events:none;}
+  .bg-glow::before, .bg-glow::after{
+    content:""; position:absolute; width:60vw; height:60vw; border-radius:50%;
+    filter:blur(90px); opacity:0.3;
+  }
+  .bg-glow::before{background:var(--glow-purple); top:-25%; right:-10%;}
+  .bg-glow::after{background:var(--accent-green-deep); bottom:-25%; left:-15%; opacity:0.15;}
+  .bg-grid{
+    position:fixed; inset:0; z-index:0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+    background-size:42px 42px;
+    mask-image:radial-gradient(circle at 50% 0%, rgba(0,0,0,0.9), transparent 65%);
+    pointer-events:none;
+  }
+
+  .shell{
+    position:relative; z-index:1;
+    max-width:760px;
+    margin:0 auto;
+    padding:32px 24px 60px;
+  }
+
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:34px;
+  }
+  .brand{display:flex; align-items:center; gap:10px;}
+  .brand-mark{
+    width:34px; height:34px; border-radius:9px;
+    background:linear-gradient(135deg, var(--glow-purple), var(--accent-green-deep));
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+  .brand-mark svg{width:18px; height:18px; color:#08070D;}
+  .brand-text{font-family:'Manrope', sans-serif; font-weight:700; font-size:14px;}
+  .brand-text span{display:block; font-size:11px; color:var(--text-muted); font-weight:500; font-family:'Inter',sans-serif;}
+
+  .topbar-right{display:flex; align-items:center; gap:12px;}
+  .teacher-chip{
+    display:flex; align-items:center; gap:8px;
+    font-size:13px; font-weight:600;
+    background:var(--glass); border:1px solid var(--glass-border);
+    padding:7px 13px; border-radius:999px;
+  }
+  .teacher-chip svg{width:14px; height:14px; color:var(--info);}
+
+  .btn-logout{
+    background:transparent;
+    border:1px solid var(--glass-border);
+    color:var(--text-muted);
+    font-size:12.5px; font-weight:600;
+    padding:7px 13px; border-radius:999px;
+    cursor:pointer;
+    transition:border-color 0.15s ease, color 0.15s ease;
+  }
+  .btn-logout:hover{border-color:rgba(255,92,122,0.4); color:var(--error);}
+
+  h1{
+    font-family:'Manrope', sans-serif;
+    font-weight:800;
+    font-size:clamp(26px, 5vw, 32px);
+    margin-bottom:6px;
+  }
+  .subtext{color:var(--text-muted); font-size:14px; margin-bottom:30px;}
+
+  .section-label{
+    font-size:12.5px; font-weight:700; letter-spacing:0.4px;
+    color:var(--text-muted); text-transform:uppercase;
+    margin-bottom:14px;
+  }
+
+  .section-label-row{
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:14px;
+  }
+  .section-label-row .section-label{margin-bottom:0;}
+  .btn-add-course{
+    background:rgba(74,255,122,0.1);
+    border:1px solid rgba(74,255,122,0.3);
+    color:var(--accent-green);
+    font-size:12px; font-weight:700;
+    padding:6px 12px; border-radius:999px;
+    cursor:pointer;
+  }
+  .btn-add-course:hover{background:rgba(74,255,122,0.18);}
+
+  .add-course-form{
+    display:none;
+    background:var(--glass);
+    border:1px solid var(--glass-border);
+    border-radius:14px;
+    padding:14px;
+    margin-bottom:14px;
+  }
+  .add-course-form.show{display:block;}
+  .field-row{display:flex; gap:10px; flex-wrap:wrap;}
+  .field-row input{
+    flex:1; min-width:140px;
+    background:rgba(255,255,255,0.04);
+    border:1px solid var(--glass-border);
+    border-radius:10px;
+    padding:10px 12px;
+    color:var(--text-primary);
+    font-size:13px;
+    font-family:'Inter', sans-serif;
+    outline:none;
+  }
+  .field-row input:focus{border-color:rgba(74,255,122,0.4);}
+  .btn-save-course{
+    background:linear-gradient(135deg, var(--accent-green), var(--accent-green-deep));
+    color:#06170C; font-weight:700; font-size:13px;
+    border:none; border-radius:10px; padding:10px 16px;
+    cursor:pointer; flex-shrink:0;
+  }
+
+  .course-grid{display:flex; flex-direction:column; gap:12px; margin-bottom:10px;}
+
+  .course-card{
+    background:var(--glass);
+    border:1px solid var(--glass-border);
+    border-radius:16px;
+    padding:18px 20px;
+    display:flex; align-items:center; justify-content:space-between;
+    gap:16px;
+    flex-wrap:wrap;
+  }
+  .course-info{display:flex; align-items:center; gap:14px;}
+  .course-icon{
+    width:42px; height:42px; border-radius:12px; flex-shrink:0;
+    background:linear-gradient(135deg, rgba(124,58,237,0.3), rgba(74,255,122,0.18));
+    display:flex; align-items:center; justify-content:center;
+  }
+  .course-icon svg{width:20px; height:20px; color:var(--accent-green);}
+  .course-name{font-family:'Manrope', sans-serif; font-weight:700; font-size:15px;}
+  .course-code{font-size:12.5px; color:var(--text-muted); margin-top:2px;}
+
+  .btn-start{
+    display:flex; align-items:center; gap:7px;
+    background:linear-gradient(135deg, var(--accent-green), var(--accent-green-deep));
+    color:#06170C;
+    font-family:'Manrope', sans-serif; font-weight:700; font-size:13.5px;
+    border:none; border-radius:10px;
+    padding:10px 16px;
+    cursor:pointer;
+    box-shadow:0 8px 22px -6px rgba(74,255,122,0.5);
+    transition:transform 0.15s ease;
+    white-space:nowrap;
+  }
+  .btn-start svg{width:15px; height:15px;}
+  .btn-start:hover{transform:translateY(-1px);}
+  .btn-start:disabled{opacity:0.6; cursor:not-allowed; transform:none;}
+
+  .empty-state{
+    text-align:center;
+    color:var(--text-muted);
+    font-size:13.5px;
+    padding:30px 0;
+  }
+
+  .live-panel{
+    margin-top:24px;
+    background:linear-gradient(160deg, rgba(124,58,237,0.18), rgba(74,255,122,0.1));
+    border:1px solid rgba(74,255,122,0.3);
+    border-radius:18px;
+    padding:22px;
+    display:none;
+  }
+  .live-panel.show{display:block; animation:rise-in 0.4s ease both;}
+
+  .live-panel-header{display:flex; align-items:center; gap:9px; margin-bottom:14px;}
+  .live-dot{
+    width:8px; height:8px; border-radius:50%;
+    background:var(--accent-green);
+    box-shadow:0 0 8px var(--accent-green);
+    animation:pulse-dot 1.6s ease-in-out infinite;
+  }
+  .live-panel-title{font-family:'Manrope', sans-serif; font-weight:700; font-size:14.5px;}
+
+  .link-row{
+    display:flex; align-items:center; gap:10px;
+    background:rgba(5,4,9,0.55);
+    border:1px solid var(--glass-border);
+    border-radius:12px;
+    padding:11px 14px;
+  }
+  .link-row input{
+    flex:1; min-width:0;
+    background:transparent; border:none; outline:none;
+    color:var(--text-primary);
+    font-size:13px;
+    font-family:'Inter', sans-serif;
+  }
+  .btn-copy{
+    background:rgba(255,255,255,0.08);
+    border:1px solid var(--glass-border);
+    color:var(--text-primary);
+    font-size:12.5px; font-weight:600;
+    padding:8px 13px; border-radius:9px;
+    cursor:pointer;
+    display:flex; align-items:center; gap:6px;
+    flex-shrink:0;
+    transition:background 0.15s ease;
+  }
+  .btn-copy svg{width:13px; height:13px;}
+  .btn-copy:hover{background:rgba(255,255,255,0.14);}
+  .btn-copy.copied{color:var(--accent-green); border-color:rgba(74,255,122,0.4);}
+
+  .live-meta{
+    display:flex; gap:18px; margin-top:14px;
+    font-size:12.5px; color:var(--text-muted);
+  }
+  .live-meta strong{color:var(--text-primary);}
+
+  .count-badge{
+    margin-left:auto;
+    background:rgba(74,255,122,0.15);
+    color:var(--accent-green);
+    font-size:12px; font-weight:700;
+    padding:4px 11px; border-radius:999px;
+  }
+
+  .student-list{
+    margin-top:16px;
+    display:flex; flex-direction:column; gap:8px;
+    max-height:260px;
+    overflow-y:auto;
+  }
+  .student-row{
+    display:flex; align-items:center; justify-content:space-between;
+    background:rgba(5,4,9,0.4);
+    border:1px solid var(--glass-border);
+    border-radius:11px;
+    padding:10px 14px;
+    font-size:13px;
+    animation:rise-in 0.3s ease both;
+  }
+  .student-row-left{display:flex; align-items:center; gap:10px;}
+  .student-row-left svg{width:15px; height:15px; color:var(--accent-green); flex-shrink:0;}
+  .student-row-name{font-weight:600;}
+  .student-row-roll{color:var(--text-muted); font-size:11.5px;}
+  .student-row-time{color:var(--text-muted); font-size:11.5px; flex-shrink:0;}
+
+  .btn-finalize{
+    width:100%;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    background:rgba(139,124,246,0.15);
+    border:1px solid rgba(139,124,246,0.35);
+    color:var(--info);
+    font-family:'Manrope', sans-serif; font-weight:700; font-size:13.5px;
+    border-radius:11px;
+    padding:12px;
+    margin-top:16px;
+    cursor:pointer;
+  }
+  .btn-finalize svg{width:15px; height:15px;}
+  .btn-finalize:hover{background:rgba(139,124,246,0.22);}
+  .btn-finalize:disabled{opacity:0.6; cursor:not-allowed;}
+
+  .finalize-result{
+    margin-top:12px;
+    font-size:12.5px;
+    color:var(--text-muted);
+  }
+  .finalize-result .flagged-row{
+    display:flex; justify-content:space-between;
+    background:rgba(255,92,122,0.08);
+    border:1px solid rgba(255,92,122,0.25);
+    border-radius:9px;
+    padding:8px 12px;
+    margin-top:6px;
+  }
+  .finalize-result .flagged-row.condonation{
+    background:rgba(251,191,107,0.08);
+    border-color:rgba(251,191,107,0.3);
+  }
+
+  @keyframes pulse-dot{0%,100%{opacity:1;} 50%{opacity:0.35;}}
+  @keyframes rise-in{from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);}}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .spin{animation:spin 0.9s linear infinite;}
+</style>
+</head>
+<body>
+
+<div class="bg-glow"></div>
+<div class="bg-grid"></div>
+
+<div class="shell">
+
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 3 7l9 5 9-5-9-5Z"/><path d="M3 12l9 5 9-5"/></svg>
+      </div>
+      <div class="brand-text">CS Department<span>QUEST · Nawabshah</span></div>
+    </div>
+    <div class="topbar-right">
+      <div class="teacher-chip">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span id="teacherNameChip">Teacher</span>
+      </div>
+      <button class="btn-logout" onclick="logout()">Logout</button>
+    </div>
+  </div>
+
+  <h1>Your courses.</h1>
+  <p class="subtext">Start a lecture to open attendance for your students.</p>
+
+  <div class="section-label">My Assigned Subjects</div>
+
+  <div class="course-grid" id="courseGrid">
+    <div class="empty-state">Loading courses...</div>
+  </div>
+
+  <div class="live-panel" id="livePanel">
+    <div class="live-panel-header">
+      <span class="live-dot"></span>
+      <span class="live-panel-title">Lecture is live — share this link with students</span>
+      <span class="count-badge" id="countBadge">0 present</span>
+    </div>
+    <div class="link-row">
+      <input type="text" id="lectureLink" readonly>
+      <button class="btn-copy" id="copyBtn" onclick="copyLink()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        Copy
+      </button>
+    </div>
+    <div class="live-meta">
+      <span>Lecture ID: <strong id="liveLectureId">—</strong></span>
+      <span>Course: <strong id="liveCourseName">—</strong></span>
+    </div>
+
+    <div class="student-list" id="studentList">
+      <div class="empty-state">No check-ins yet. Waiting for students...</div>
+    </div>
+
+    <button class="btn-finalize" id="finalizeBtn" onclick="finalizeLecture()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      Finalize Attendance
+    </button>
+    <div class="finalize-result" id="finalizeResult"></div>
+  </div>
+
+</div>
+
+<script>
+  const teacherId = localStorage.getItem('teacher_id');
+  const teacherName = localStorage.getItem('teacher_name');
+
+  if (!teacherId) {
+    window.location.href = '/teacher/login';
+  }
+  document.getElementById('teacherNameChip').textContent = teacherName || 'Teacher';
+
+  function logout(){
+    localStorage.removeItem('teacher_token');
+    localStorage.removeItem('teacher_name');
+    localStorage.removeItem('teacher_id');
+    window.location.href = '/teacher/login';
+  }
+
+  function copyLink(){
+    const input = document.getElementById('lectureLink');
+    navigator.clipboard.writeText(input.value).then(() => {
+      const btn = document.getElementById('copyBtn');
+      btn.classList.add('copied');
+      btn.querySelector('svg').outerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
+      setTimeout(() => {
+        btn.classList.remove('copied');
+        btn.querySelector('svg').outerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+      }, 1500);
+    });
+  }
+
+  function courseCardHTML(course){
+    return `
+      <div class="course-card">
+        <div class="course-info">
+          <div class="course-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/></svg>
+          </div>
+          <div>
+            <div class="course-name">${course.course_name}</div>
+            <div class="course-code">${course.course_code}</div>
+          </div>
+        </div>
+        <button class="btn-start" onclick="startLecture(${course.id}, '${course.course_name}', this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          Start Lecture
+        </button>
+      </div>
+    `;
+  }
+
+  function loadCourses(){
+    fetch(`/courses/teacher/${teacherId}`)
+      .then(res => res.json())
+      .then(data => {
+        const grid = document.getElementById('courseGrid');
+        if (!data.courses || data.courses.length === 0) {
+          grid.innerHTML = '<div class="empty-state">No courses yet. Ask admin to add a course for you.</div>';
+          return;
+        }
+        grid.innerHTML = data.courses.map(courseCardHTML).join('');
+      })
+      .catch(err => {
+        document.getElementById('courseGrid').innerHTML = '<div class="empty-state">Could not load courses.</div>';
+      });
+  }
+
+  let pollTimer = null;
+  let activeLectureId = null;
+
+  function finalizeLecture(){
+    if (!activeLectureId) return;
+    const btn = document.getElementById('finalizeBtn');
+    const resultEl = document.getElementById('finalizeResult');
+    btn.disabled = true;
+    resultEl.innerHTML = 'Checking attendance records...';
+
+    fetch('/lectures/finalize', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lecture_id: activeLectureId })
+    })
+    .then(res => res.json())
+    .then(data => {
+      btn.disabled = false;
+      if (!data.flagged_students || data.flagged_students.length === 0) {
+        resultEl.innerHTML = '✅ All enrolled students meet the attendance requirement.';
+        return;
+      }
+      resultEl.innerHTML = data.flagged_students.map(s => `
+        <div class="flagged-row ${s.status_type === 'condonation' ? 'condonation' : ''}">
+          <span>${s.name} — ${s.percentage}%</span>
+          <span>${s.status_type === 'condonation' ? 'Condonation' : 'Not Eligible'}</span>
+        </div>
+      `).join('');
+    })
+    .catch(err => {
+      btn.disabled = false;
+      resultEl.innerHTML = 'Could not finalize: ' + err;
+    });
+  }
+
+  function studentRowHTML(s){
+    return `
+      <div class="student-row">
+        <div class="student-row-left">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8.5 12.5 2.5 2.5 4.5-5"/></svg>
+          <div>
+            <div class="student-row-name">${s.name}</div>
+            <div class="student-row-roll">${s.roll_no}</div>
+          </div>
+        </div>
+        <div class="student-row-time">${s.marked_at}</div>
+      </div>
+    `;
+  }
+
+  function pollAttendance(lectureId){
+    fetch(`/attendance/lecture/${lectureId}`)
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById('countBadge').textContent = `${data.count} present`;
+        const listEl = document.getElementById('studentList');
+        if (!data.students || data.students.length === 0) {
+          listEl.innerHTML = '<div class="empty-state">No check-ins yet. Waiting for students...</div>';
+          return;
+        }
+        listEl.innerHTML = data.students.map(studentRowHTML).join('');
+      })
+      .catch(() => {});
+  }
+
+  function startLecture(courseId, courseName, btnEl){
+    btnEl.disabled = true;
+    const originalHTML = btnEl.innerHTML;
+    btnEl.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="spin"><path d="M21 12a9 9 0 1 1-2.64-6.36"/></svg> Starting...';
+
+    fetch('/lectures/start', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ course_id: courseId })
+    })
+    .then(res => res.json())
+    .then(data => {
+      btnEl.disabled = false;
+      btnEl.innerHTML = originalHTML;
+
+      if (data.lecture_id) {
+        activeLectureId = data.lecture_id;
+        document.getElementById('finalizeResult').innerHTML = '';
+        document.getElementById('finalizeBtn').disabled = false;
+        const link = `${window.location.origin}/capture?lecture_id=${data.lecture_id}`;
+        document.getElementById('lectureLink').value = link;
+        document.getElementById('liveLectureId').textContent = data.lecture_id;
+        document.getElementById('liveCourseName').textContent = courseName;
+        document.getElementById('livePanel').classList.add('show');
+        document.getElementById('livePanel').scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        if (pollTimer) clearInterval(pollTimer);
+        pollAttendance(data.lecture_id);
+        pollTimer = setInterval(() => pollAttendance(data.lecture_id), 4000);
+      }
+    })
+    .catch(err => {
+      btnEl.disabled = false;
+      btnEl.innerHTML = originalHTML;
+    });
+  }
+
+  loadCourses();
+</script>
+
+{% include 'chatbot_widget.html' %}
+
+</body>
+</html>

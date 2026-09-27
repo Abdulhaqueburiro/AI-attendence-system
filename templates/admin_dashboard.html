@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard · Attendance System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#08070D;
+    --glow-purple:#7C3AED;
+    --glow-violet:#A855F7;
+    --accent-green:#4AFF7A;
+    --accent-green-deep:#22C55E;
+    --glass:rgba(255,255,255,0.05);
+    --glass-border:rgba(255,255,255,0.12);
+    --text-primary:#F4F2FA;
+    --text-muted:#A6A0B8;
+    --error:#FF5C7A;
+    --info:#8B7CF6;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background:var(--bg); color:var(--text-primary); font-family:'Inter', sans-serif;
+    min-height:100vh; overflow-x:hidden; position:relative;
+  }
+  .bg-glow{position:fixed; inset:0; z-index:0; pointer-events:none;}
+  .bg-glow::before, .bg-glow::after{
+    content:""; position:absolute; width:60vw; height:60vw; border-radius:50%;
+    filter:blur(90px); opacity:0.3;
+  }
+  .bg-glow::before{background:var(--glow-purple); top:-25%; right:-10%;}
+  .bg-glow::after{background:var(--accent-green-deep); bottom:-25%; left:-15%; opacity:0.15;}
+
+  .shell{position:relative; z-index:1; max-width:880px; margin:0 auto; padding:32px 24px 60px;}
+
+  .topbar{display:flex; align-items:center; justify-content:space-between; margin-bottom:34px;}
+  .brand{display:flex; align-items:center; gap:10px;}
+  .brand-mark{
+    width:34px; height:34px; border-radius:9px;
+    background:linear-gradient(135deg, var(--glow-purple), var(--accent-green-deep));
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+  .brand-mark svg{width:18px; height:18px; color:#08070D;}
+  .brand-text{font-family:'Manrope', sans-serif; font-weight:700; font-size:14px;}
+  .brand-text span{display:block; font-size:11px; color:var(--text-muted); font-weight:500; font-family:'Inter',sans-serif;}
+  .topbar-right{display:flex; align-items:center; gap:12px;}
+  .admin-chip{
+    display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600;
+    background:rgba(139,124,246,0.12); border:1px solid rgba(139,124,246,0.3);
+    padding:7px 13px; border-radius:999px; color:var(--info);
+  }
+  .admin-chip svg{width:14px; height:14px;}
+  .btn-logout{
+    background:transparent; border:1px solid var(--glass-border); color:var(--text-muted);
+    font-size:12.5px; font-weight:600; padding:7px 13px; border-radius:999px; cursor:pointer;
+  }
+  .btn-logout:hover{border-color:rgba(255,92,122,0.4); color:var(--error);}
+
+  h1{font-family:'Manrope', sans-serif; font-weight:800; font-size:clamp(26px, 5vw, 32px); margin-bottom:6px;}
+  .subtext{color:var(--text-muted); font-size:14px; margin-bottom:30px;}
+
+  .panel{
+    background:var(--glass); border:1px solid var(--glass-border); border-radius:18px;
+    padding:24px; margin-bottom:28px;
+  }
+  .panel-title{font-family:'Manrope', sans-serif; font-weight:700; font-size:15px; margin-bottom:18px; display:flex; align-items:center; gap:9px;}
+  .panel-title svg{width:17px; height:17px; color:var(--accent-green);}
+
+  .form-grid{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px;}
+  .form-grid.full{grid-template-columns:1fr;}
+  .field label{display:block; font-size:12px; font-weight:600; color:var(--text-muted); margin-bottom:6px;}
+  .field input, .field select{
+    width:100%;
+    background:rgba(255,255,255,0.04); border:1px solid var(--glass-border); border-radius:10px;
+    padding:11px 13px; color:var(--text-primary); font-size:13.5px; font-family:'Inter', sans-serif; outline:none;
+  }
+  .field input:focus, .field select:focus{border-color:rgba(74,255,122,0.4);}
+  .field select option{background:#13121a;}
+
+  .lectures-note{font-size:12px; color:var(--text-muted); margin-bottom:16px;}
+  .lectures-note strong{color:var(--accent-green);}
+
+  .btn-submit{
+    background:linear-gradient(135deg, var(--accent-green), var(--accent-green-deep));
+    color:#06170C; font-family:'Manrope', sans-serif; font-weight:700; font-size:14px;
+    border:none; border-radius:11px; padding:12px 22px; cursor:pointer;
+  }
+  .btn-submit:hover{transform:translateY(-1px);}
+  .btn-submit:disabled{opacity:0.6; cursor:not-allowed;}
+
+  .form-msg{margin-top:12px; font-size:12.5px;}
+  .form-msg.success{color:var(--accent-green);}
+  .form-msg.error{color:var(--error);}
+
+  .subject-row{
+    display:flex; align-items:center; justify-content:space-between; gap:14px;
+    background:rgba(255,255,255,0.03); border:1px solid var(--glass-border);
+    border-radius:13px; padding:14px 16px; margin-bottom:10px; flex-wrap:wrap;
+  }
+  .subject-info{display:flex; flex-direction:column; gap:3px;}
+  .subject-name{font-weight:700; font-size:13.5px;}
+  .subject-meta{font-size:11.5px; color:var(--text-muted);}
+  .subject-assign{display:flex; align-items:center; gap:8px;}
+  .subject-assign select{
+    background:rgba(255,255,255,0.04); border:1px solid var(--glass-border); border-radius:9px;
+    padding:7px 10px; color:var(--text-primary); font-size:12.5px;
+  }
+  .btn-reassign{
+    background:rgba(139,124,246,0.15); border:1px solid rgba(139,124,246,0.35); color:var(--info);
+    font-size:11.5px; font-weight:700; padding:7px 12px; border-radius:9px; cursor:pointer;
+  }
+  .empty-state{text-align:center; color:var(--text-muted); font-size:13px; padding:20px 0;}
+</style>
+</head>
+<body>
+
+<div class="bg-glow"></div>
+
+<div class="shell">
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 3 7l9 5 9-5-9-5Z"/><path d="M3 12l9 5 9-5"/></svg>
+      </div>
+      <div class="brand-text">CS Department<span>QUEST · Nawabshah</span></div>
+    </div>
+    <div class="topbar-right">
+      <div class="admin-chip">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+        <span id="adminNameChip">Admin</span>
+      </div>
+      <button class="btn-logout" onclick="logout()">Logout</button>
+    </div>
+  </div>
+
+  <h1>Semester setup.</h1>
+  <p class="subtext">Add subjects for this semester and assign a teacher to each.</p>
+
+  <div class="panel">
+    <div class="panel-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5v14"/></svg>
+      Add Subject
+    </div>
+
+    <div class="form-grid">
+      <div class="field">
+        <label>Subject Name</label>
+        <input type="text" id="subjectName" placeholder="Operating Systems">
+      </div>
+      <div class="field">
+        <label>Subject Code</label>
+        <input type="text" id="subjectCode" placeholder="CS401">
+      </div>
+    </div>
+    <div class="form-grid">
+      <div class="field">
+        <label>Semester</label>
+        <input type="text" id="semesterLabel" placeholder="Semester 5 - Fall 2026" value="Semester 5 - Fall 2026">
+      </div>
+      <div class="field">
+        <label>Assign Teacher</label>
+        <select id="teacherSelect">
+          <option value="">Loading teachers...</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="lectures-note">Total lectures for this subject is fixed at <strong>45</strong> per department policy.</div>
+
+    <button class="btn-submit" onclick="addSubject()">Add Subject</button>
+    <div class="form-msg" id="formMsg"></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/></svg>
+      All Subjects &amp; Assigned Teachers
+    </div>
+    <div id="subjectsList">
+      <div class="empty-state">Loading subjects...</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const adminId = localStorage.getItem('teacher_id');
+  const adminName = localStorage.getItem('teacher_name');
+  const adminRole = localStorage.getItem('teacher_role');
+
+  if (!adminId || adminRole !== 'admin') {
+    window.location.href = '/teacher/login';
+  }
+  document.getElementById('adminNameChip').textContent = adminName || 'Admin';
+
+  function logout(){
+    localStorage.removeItem('teacher_token');
+    localStorage.removeItem('teacher_name');
+    localStorage.removeItem('teacher_id');
+    localStorage.removeItem('teacher_role');
+    window.location.href = '/teacher/login';
+  }
+
+  let teachersCache = [];
+
+  function loadTeachers(){
+    fetch('/teachers/all')
+      .then(res => res.json())
+      .then(data => {
+        teachersCache = data.teachers || [];
+        const select = document.getElementById('teacherSelect');
+        if (teachersCache.length === 0) {
+          select.innerHTML = '<option value="">No teachers registered yet</option>';
+          return;
+        }
+        select.innerHTML = teachersCache.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+      });
+  }
+
+  function addSubject(){
+    const course_name = document.getElementById('subjectName').value.trim();
+    const course_code = document.getElementById('subjectCode').value.trim();
+    const semester = document.getElementById('semesterLabel').value.trim();
+    const teacher_id = document.getElementById('teacherSelect').value;
+    const msgEl = document.getElementById('formMsg');
+
+    if (!course_name || !course_code || !teacher_id) {
+      msgEl.className = 'form-msg error';
+      msgEl.textContent = 'Please fill in all fields and select a teacher.';
+      return;
+    }
+
+    fetch('/courses/add', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ course_name, course_code, teacher_id, semester, total_lectures: 45 })
+    })
+    .then(res => res.json().then(data => ({ status: res.status, data })))
+    .then(({ status, data }) => {
+      if (status === 201) {
+        msgEl.className = 'form-msg success';
+        msgEl.textContent = 'Subject added and assigned successfully!';
+        document.getElementById('subjectName').value = '';
+        document.getElementById('subjectCode').value = '';
+        loadSubjects();
+      } else {
+        msgEl.className = 'form-msg error';
+        msgEl.textContent = data.error || 'Could not add subject.';
+      }
+    })
+    .catch(err => {
+      msgEl.className = 'form-msg error';
+      msgEl.textContent = 'Connection error: ' + err;
+    });
+  }
+
+  function reassignSubject(courseId, selectEl){
+    const teacher_id = selectEl.value;
+    fetch('/courses/reassign', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ course_id: courseId, teacher_id })
+    })
+    .then(res => res.json())
+    .then(() => loadSubjects());
+  }
+
+  function subjectRowHTML(c){
+    const options = teachersCache.map(t =>
+      `<option value="${t.id}" ${t.id === c.teacher_id ? 'selected' : ''}>${t.name}</option>`
+    ).join('');
+
+    return `
+      <div class="subject-row">
+        <div class="subject-info">
+          <div class="subject-name">${c.course_name} <span style="color:var(--text-muted); font-weight:500;">(${c.course_code})</span></div>
+          <div class="subject-meta">${c.semester || 'Current Semester'} · ${c.total_lectures} total lectures</div>
+        </div>
+        <div class="subject-assign">
+          <select onchange="window._pendingSelect = this">${options}</select>
+          <button class="btn-reassign" onclick="reassignSubject(${c.id}, this.previousElementSibling)">Reassign</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function loadSubjects(){
+    fetch('/courses/all/detailed')
+      .then(res => res.json())
+      .then(data => {
+        const el = document.getElementById('subjectsList');
+        if (!data.courses || data.courses.length === 0) {
+          el.innerHTML = '<div class="empty-state">No subjects added yet.</div>';
+          return;
+        }
+        el.innerHTML = data.courses.map(subjectRowHTML).join('');
+      })
+      .catch(() => {
+        document.getElementById('subjectsList').innerHTML = '<div class="empty-state">Could not load subjects.</div>';
+      });
+  }
+
+  loadTeachers();
+  loadSubjects();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student Dashboard · Attendance System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#08070D;
+    --glow-purple:#7C3AED;
+    --glow-violet:#A855F7;
+    --accent-green:#4AFF7A;
+    --accent-green-deep:#22C55E;
+    --glass:rgba(255,255,255,0.05);
+    --glass-border:rgba(255,255,255,0.12);
+    --text-primary:#F4F2FA;
+    --text-muted:#A6A0B8;
+    --error:#FF5C7A;
+    --warning:#FBBF6B;
+    --info:#8B7CF6;
+  }
+
+  *{box-sizing:border-box; margin:0; padding:0;}
+
+  body{
+    background:var(--bg);
+    color:var(--text-primary);
+    font-family:'Inter', sans-serif;
+    min-height:100vh;
+    overflow-x:hidden;
+    position:relative;
+  }
+
+  .bg-glow{position:fixed; inset:0; z-index:0; pointer-events:none;}
+  .bg-glow::before, .bg-glow::after{
+    content:""; position:absolute; width:60vw; height:60vw; border-radius:50%;
+    filter:blur(90px); opacity:0.3;
+  }
+  .bg-glow::before{background:var(--glow-purple); top:-25%; right:-10%;}
+  .bg-glow::after{background:var(--accent-green-deep); bottom:-25%; left:-15%; opacity:0.15;}
+  .bg-grid{
+    position:fixed; inset:0; z-index:0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+    background-size:42px 42px;
+    mask-image:radial-gradient(circle at 50% 0%, rgba(0,0,0,0.9), transparent 65%);
+    pointer-events:none;
+  }
+
+  .shell{
+    position:relative; z-index:1;
+    max-width:760px;
+    margin:0 auto;
+    padding:32px 24px 60px;
+  }
+
+  .topbar{display:flex; align-items:center; justify-content:space-between; margin-bottom:34px;}
+  .brand{display:flex; align-items:center; gap:10px;}
+  .brand-mark{
+    width:34px; height:34px; border-radius:9px;
+    background:linear-gradient(135deg, var(--glow-purple), var(--accent-green-deep));
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+  .brand-mark svg{width:18px; height:18px; color:#08070D;}
+  .brand-text{font-family:'Manrope', sans-serif; font-weight:700; font-size:14px;}
+  .brand-text span{display:block; font-size:11px; color:var(--text-muted); font-weight:500; font-family:'Inter',sans-serif;}
+
+  .topbar-right{display:flex; align-items:center; gap:12px;}
+  .student-chip{
+    display:flex; align-items:center; gap:8px;
+    font-size:13px; font-weight:600;
+    background:var(--glass); border:1px solid var(--glass-border);
+    padding:7px 13px; border-radius:999px;
+  }
+  .student-chip svg{width:14px; height:14px; color:var(--info);}
+
+  .btn-logout{
+    background:transparent; border:1px solid var(--glass-border); color:var(--text-muted);
+    font-size:12.5px; font-weight:600; padding:7px 13px; border-radius:999px;
+    cursor:pointer; transition:border-color 0.15s ease, color 0.15s ease;
+  }
+  .btn-logout:hover{border-color:rgba(255,92,122,0.4); color:var(--error);}
+
+  h1{font-family:'Manrope', sans-serif; font-weight:800; font-size:clamp(26px, 5vw, 32px); margin-bottom:6px;}
+  .subtext{color:var(--text-muted); font-size:14px; margin-bottom:30px;}
+
+  .section-label{
+    font-size:12.5px; font-weight:700; letter-spacing:0.4px;
+    color:var(--text-muted); text-transform:uppercase; margin-bottom:14px;
+  }
+
+  .course-stat-card{
+    background:var(--glass);
+    border:1px solid var(--glass-border);
+    border-radius:16px;
+    padding:18px 20px;
+    margin-bottom:12px;
+  }
+  .course-stat-top{display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;}
+  .course-stat-name{font-family:'Manrope', sans-serif; font-weight:700; font-size:14.5px;}
+  .course-stat-code{font-size:12px; color:var(--text-muted); margin-top:2px;}
+  .course-stat-pct{font-family:'Manrope', sans-serif; font-weight:800; font-size:20px;}
+
+  .eligibility-badge{
+    display:inline-block;
+    font-size:11px; font-weight:700;
+    padding:3px 9px; border-radius:999px;
+  }
+  .eligibility-badge.safe{background:rgba(74,255,122,0.15); color:var(--accent-green);}
+  .eligibility-badge.condonation{background:rgba(251,191,107,0.15); color:var(--warning);}
+  .eligibility-badge.not_eligible{background:rgba(255,92,122,0.15); color:var(--error);}
+
+  .attendance-table-wrap{
+    border:1px solid var(--glass-border);
+    border-radius:16px;
+    overflow:hidden;
+    margin-bottom:10px;
+  }
+  .attendance-table{width:100%; border-collapse:collapse; font-size:13px;}
+  .attendance-table thead th{
+    background:rgba(124,58,237,0.18);
+    color:var(--text-primary);
+    font-family:'Manrope', sans-serif;
+    font-weight:700;
+    font-size:11.5px;
+    text-transform:uppercase;
+    letter-spacing:0.3px;
+    padding:13px 14px;
+    text-align:left;
+    border-bottom:1px solid var(--glass-border);
+  }
+  .attendance-table thead th.num-col{width:36px; text-align:center;}
+  .attendance-table thead th.center-col{text-align:center;}
+  .attendance-table tbody td{
+    padding:13px 14px;
+    border-bottom:1px solid var(--glass-border);
+    vertical-align:middle;
+  }
+  .attendance-table tbody tr:last-child td{border-bottom:none;}
+  .attendance-table tbody tr:nth-child(even){background:rgba(255,255,255,0.02);}
+  .attendance-table td.num-col{text-align:center; color:var(--text-muted);}
+  .attendance-table td.center-col{text-align:center; color:var(--text-muted); font-weight:600;}
+  .attendance-table .subj-name{font-weight:700; font-size:13px;}
+  .attendance-table .subj-code{font-size:11px; color:var(--text-muted); margin-top:2px;}
+  .attendance-table .attended-cell{display:flex; flex-direction:column; align-items:center; gap:4px;}
+  .attendance-table .attended-num{font-weight:700; color:var(--text-primary);}
+  .attendance-table .attended-pct{font-size:11px; font-weight:700;}
+  .attendance-table .attended-pct.safe{color:var(--accent-green);}
+  .attendance-table .attended-pct.condonation{color:var(--warning);}
+  .attendance-table .attended-pct.not_eligible{color:var(--error);}
+
+  @media (max-width:640px){
+    .attendance-table{font-size:11.5px;}
+    .attendance-table thead th, .attendance-table tbody td{padding:10px 8px;}
+  }
+
+  .notif-section{margin-top:24px;}
+  .notif-card{
+    border-radius:13px;
+    padding:13px 15px;
+    margin-bottom:9px;
+    font-size:13px;
+  }
+  .notif-card.condonation{background:rgba(251,191,107,0.08); border:1px solid rgba(251,191,107,0.3);}
+  .notif-card.not_eligible{background:rgba(255,92,122,0.08); border:1px solid rgba(255,92,122,0.3);}
+  .notif-card-top{display:flex; justify-content:space-between; font-weight:700; margin-bottom:4px;}
+  .notif-card-date{font-size:11px; color:var(--text-muted); font-weight:500;}
+  .notif-card-msg{color:var(--text-muted); font-size:12px; line-height:1.5;}
+
+  .available-card{
+    display:flex; align-items:center; justify-content:space-between;
+    background:var(--glass);
+    border:1px solid var(--glass-border);
+    border-radius:14px;
+    padding:14px 18px;
+    margin-bottom:10px;
+  }
+  .available-card-name{font-weight:700; font-size:14px;}
+  .available-card-code{font-size:12px; color:var(--text-muted); margin-top:2px;}
+  .btn-enroll{
+    background:linear-gradient(135deg, var(--accent-green), var(--accent-green-deep));
+    color:#06170C; font-weight:700; font-size:12.5px;
+    border:none; border-radius:9px; padding:8px 14px;
+    cursor:pointer;
+  }
+
+  .progress-track{
+    width:100%; height:8px; border-radius:999px;
+    background:rgba(255,255,255,0.08);
+    overflow:hidden;
+  }
+  .progress-fill{height:100%; border-radius:999px; transition:width 0.4s ease;}
+  .course-stat-meta{font-size:12px; color:var(--text-muted); margin-top:8px;}
+
+  .pct-good{color:var(--accent-green);}
+  .pct-warn{color:var(--warning);}
+  .pct-bad{color:var(--error);}
+  .fill-good{background:linear-gradient(90deg, var(--accent-green-deep), var(--accent-green));}
+  .fill-warn{background:linear-gradient(90deg, #D97706, var(--warning));}
+  .fill-bad{background:linear-gradient(90deg, #B91C3C, var(--error));}
+
+  .history-section{margin-top:30px;}
+  .history-row{
+    display:flex; align-items:center; justify-content:space-between;
+    background:var(--glass);
+    border:1px solid var(--glass-border);
+    border-radius:13px;
+    padding:13px 16px;
+    margin-bottom:9px;
+    font-size:13px;
+  }
+  .history-left{display:flex; align-items:center; gap:11px;}
+  .history-left svg{width:16px; height:16px; color:var(--accent-green); flex-shrink:0;}
+  .history-course{font-weight:600;}
+  .history-date{color:var(--text-muted); font-size:11.5px;}
+  .history-time{color:var(--text-muted); font-size:11.5px; flex-shrink:0;}
+
+  .empty-state{text-align:center; color:var(--text-muted); font-size:13.5px; padding:30px 0;}
+</style>
+</head>
+<body>
+
+<div class="bg-glow"></div>
+<div class="bg-grid"></div>
+
+<div class="shell">
+
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 3 7l9 5 9-5-9-5Z"/><path d="M3 12l9 5 9-5"/></svg>
+      </div>
+      <div class="brand-text">CS Department<span>QUEST · Nawabshah</span></div>
+    </div>
+    <div class="topbar-right">
+      <div class="student-chip">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span id="studentNameChip">Student</span>
+      </div>
+      <button class="btn-logout" onclick="logout()">Logout</button>
+    </div>
+  </div>
+
+  <h1>Your attendance.</h1>
+  <p class="subtext">Roll No. <strong id="rollNoText">—</strong> · Track your course-wise attendance.</p>
+
+  <div class="section-label">Course Attendance</div>
+  <div class="attendance-table-wrap">
+    <table class="attendance-table">
+      <thead>
+        <tr>
+          <th class="num-col">#</th>
+          <th>Subject</th>
+          <th class="center-col">Total</th>
+          <th class="center-col">Conducted</th>
+          <th class="center-col">Attended</th>
+        </tr>
+      </thead>
+      <tbody id="courseStats">
+        <tr><td colspan="5" class="empty-state">Loading attendance...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="notif-section" id="notifSection" style="display:none;">
+    <div class="section-label">Notifications</div>
+    <div id="notifList"></div>
+  </div>
+
+  <div class="section-label" style="margin-top:30px;">Available Courses</div>
+  <div id="availableCourses">
+    <div class="empty-state">Loading...</div>
+  </div>
+
+  <div class="history-section">
+    <div class="section-label">Recent Check-ins</div>
+    <div id="historyList">
+      <div class="empty-state">Loading history...</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const studentId = localStorage.getItem('student_id');
+  const studentName = localStorage.getItem('student_name');
+  const rollNo = localStorage.getItem('student_roll_no');
+
+  if (!studentId) {
+    window.location.href = '/student/login';
+  }
+  document.getElementById('studentNameChip').textContent = studentName || 'Student';
+  document.getElementById('rollNoText').textContent = rollNo || '—';
+
+  function logout(){
+    localStorage.removeItem('student_token');
+    localStorage.removeItem('student_name');
+    localStorage.removeItem('student_id');
+    localStorage.removeItem('student_roll_no');
+    window.location.href = '/student/login';
+  }
+
+  function pctClass(pct){
+    if (pct >= 75) return { text: 'pct-good', fill: 'fill-good' };
+    if (pct >= 50) return { text: 'pct-warn', fill: 'fill-warn' };
+    return { text: 'pct-bad', fill: 'fill-bad' };
+  }
+
+  function eligibilityLabel(e){
+    if (e === 'safe') return 'Safe';
+    if (e === 'condonation') return 'Condonation';
+    return 'Not Eligible';
+  }
+
+  function courseRowHTML(c, index){
+    return `
+      <tr>
+        <td class="num-col">${index + 1}</td>
+        <td>
+          <div class="subj-name">${c.course_name}</div>
+          <div class="subj-code">${c.course_code}</div>
+          <span class="eligibility-badge ${c.eligibility}" style="margin-top:5px; display:inline-block;">${eligibilityLabel(c.eligibility)}</span>
+        </td>
+        <td class="center-col">${c.total_lectures}</td>
+        <td class="center-col">${c.conducted}</td>
+        <td>
+          <div class="attended-cell">
+            <span class="attended-num">${c.attended}</span>
+            <span class="attended-pct ${c.eligibility}">${c.percentage}%</span>
+          </div>
+        </td>
+      </tr>
+    `;
+  }
+
+  function notifCardHTML(n){
+    return `
+      <div class="notif-card ${n.status_type}">
+        <div class="notif-card-top">
+          <span>${n.course_name}</span>
+          <span class="notif-card-date">${n.created_at}</span>
+        </div>
+        <div class="notif-card-msg">${n.message}</div>
+      </div>
+    `;
+  }
+
+  function availableCardHTML(c){
+    return `
+      <div class="available-card">
+        <div>
+          <div class="available-card-name">${c.course_name}</div>
+          <div class="available-card-code">${c.course_code}</div>
+        </div>
+        <button class="btn-enroll" onclick="enrollCourse(${c.id}, this)">Enroll</button>
+      </div>
+    `;
+  }
+
+  function enrollCourse(courseId, btnEl){
+    btnEl.disabled = true;
+    btnEl.textContent = 'Enrolling...';
+    fetch('/enrollments/add', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ student_id: studentId, course_id: courseId })
+    })
+    .then(res => res.json())
+    .then(() => {
+      loadAttendance();
+      loadAvailableCourses();
+    })
+    .catch(() => {
+      btnEl.disabled = false;
+      btnEl.textContent = 'Enroll';
+    });
+  }
+
+  function loadAvailableCourses(){
+    fetch(`/courses/available/${studentId}`)
+      .then(res => res.json())
+      .then(data => {
+        const el = document.getElementById('availableCourses');
+        if (!data.courses || data.courses.length === 0) {
+          el.innerHTML = '<div class="empty-state">You are enrolled in all available courses.</div>';
+          return;
+        }
+        el.innerHTML = data.courses.map(availableCardHTML).join('');
+      })
+      .catch(() => {
+        document.getElementById('availableCourses').innerHTML = '<div class="empty-state">Could not load courses.</div>';
+      });
+  }
+
+  function loadNotifications(){
+    fetch(`/notifications/student/${studentId}`)
+      .then(res => res.json())
+      .then(data => {
+        const section = document.getElementById('notifSection');
+        const list = document.getElementById('notifList');
+        if (!data.notifications || data.notifications.length === 0) {
+          section.style.display = 'none';
+          return;
+        }
+        section.style.display = 'block';
+        list.innerHTML = data.notifications.map(notifCardHTML).join('');
+      })
+      .catch(() => {});
+  }
+
+  function historyRowHTML(h){
+    return `
+      <div class="history-row">
+        <div class="history-left">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8.5 12.5 2.5 2.5 4.5-5"/></svg>
+          <div>
+            <div class="history-course">${h.course_name}</div>
+            <div class="history-date">${h.lecture_date}</div>
+          </div>
+        </div>
+        <div class="history-time">${h.marked_at}</div>
+      </div>
+    `;
+  }
+
+  function loadAttendance(){
+    fetch(`/attendance/student/${studentId}`)
+      .then(res => res.json())
+      .then(data => {
+        const statsEl = document.getElementById('courseStats');
+        if (!data.courses || data.courses.length === 0) {
+          statsEl.innerHTML = '<tr><td colspan="5" class="empty-state">No courses found.</td></tr>';
+        } else {
+          statsEl.innerHTML = data.courses.map((c, i) => courseRowHTML(c, i)).join('');
+        }
+
+        const historyEl = document.getElementById('historyList');
+        if (!data.history || data.history.length === 0) {
+          historyEl.innerHTML = '<div class="empty-state">No check-ins yet.</div>';
+        } else {
+          historyEl.innerHTML = data.history.map(historyRowHTML).join('');
+        }
+      })
+      .catch(() => {
+        document.getElementById('courseStats').innerHTML = '<tr><td colspan="5" class="empty-state">Could not load attendance.</td></tr>';
+      });
+  }
+
+  loadAttendance();
+  loadAvailableCourses();
+  loadNotifications();
+</script>
+
+{% include 'chatbot_widget.html' %}
+
+</body>
+</html>

@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Face Check-In · Attendance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#08070D;
+    --glow-purple:#7C3AED;
+    --glow-violet:#A855F7;
+    --accent-green:#4AFF7A;
+    --accent-green-deep:#22C55E;
+    --glass:rgba(255,255,255,0.05);
+    --glass-border:rgba(255,255,255,0.12);
+    --text-primary:#F4F2FA;
+    --text-muted:#A6A0B8;
+    --error:#FF5C7A;
+    --info:#8B7CF6;
+  }
+
+  *{box-sizing:border-box; margin:0; padding:0;}
+
+  body{
+    background:var(--bg);
+    color:var(--text-primary);
+    font-family:'Inter', sans-serif;
+    min-height:100vh;
+    overflow-x:hidden;
+    position:relative;
+  }
+
+  .bg-glow{
+    position:fixed;
+    inset:0;
+    z-index:0;
+    pointer-events:none;
+  }
+  .bg-glow::before, .bg-glow::after{
+    content:"";
+    position:absolute;
+    width:60vw;
+    height:60vw;
+    border-radius:50%;
+    filter:blur(90px);
+    opacity:0.35;
+  }
+  .bg-glow::before{
+    background:var(--glow-purple);
+    top:-20%;
+    right:-10%;
+  }
+  .bg-glow::after{
+    background:var(--accent-green-deep);
+    bottom:-25%;
+    left:-15%;
+    opacity:0.18;
+  }
+  .bg-grid{
+    position:fixed;
+    inset:0;
+    z-index:0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px);
+    background-size:42px 42px;
+    mask-image:radial-gradient(circle at 50% 35%, rgba(0,0,0,0.9), transparent 70%);
+    pointer-events:none;
+  }
+
+  .shell{
+    position:relative;
+    z-index:1;
+    max-width:560px;
+    margin:0 auto;
+    padding:36px 24px 60px;
+  }
+
+  .topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:36px;
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .brand-mark{
+    width:34px; height:34px;
+    border-radius:9px;
+    background:linear-gradient(135deg, var(--glow-purple), var(--accent-green-deep));
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+  }
+  .brand-mark svg{width:18px; height:18px; color:#08070D;}
+  .brand-text{font-family:'Manrope', sans-serif; font-weight:700; font-size:14px; letter-spacing:0.2px;}
+  .brand-text span{display:block; font-size:11px; color:var(--text-muted); font-weight:500; font-family:'Inter',sans-serif;}
+
+  .live-pill{
+    display:flex; align-items:center; gap:6px;
+    font-size:12px; font-weight:600; color:var(--accent-green);
+    background:rgba(74,255,122,0.08);
+    border:1px solid rgba(74,255,122,0.25);
+    padding:6px 12px; border-radius:999px;
+  }
+  .live-dot{
+    width:7px; height:7px; border-radius:50%;
+    background:var(--accent-green);
+    box-shadow:0 0 8px var(--accent-green);
+    animation:pulse-dot 1.6s ease-in-out infinite;
+  }
+
+  .eyebrow{
+    display:inline-flex; align-items:center; gap:7px;
+    background:var(--glass);
+    border:1px solid var(--glass-border);
+    border-radius:999px;
+    padding:7px 14px 7px 10px;
+    font-size:13px; font-weight:600;
+    color:var(--accent-green);
+    margin-bottom:22px;
+  }
+  .eyebrow svg{width:14px; height:14px;}
+
+  h1{
+    font-family:'Manrope', sans-serif;
+    font-weight:800;
+    font-size:clamp(30px, 6vw, 40px);
+    line-height:1.12;
+    letter-spacing:-0.5px;
+    margin-bottom:14px;
+  }
+  h1 .glow{
+    color:var(--accent-green);
+    text-shadow:0 0 18px rgba(74,255,122,0.45);
+  }
+  .meta-line{
+    color:var(--text-muted);
+    font-size:14.5px;
+    margin-bottom:30px;
+  }
+  .meta-line strong{color:var(--text-primary); font-weight:600;}
+
+  .panel{
+    position:relative;
+    border-radius:22px;
+    padding:14px;
+    background:linear-gradient(160deg, rgba(124,58,237,0.35), rgba(74,255,122,0.18));
+    margin-bottom:26px;
+  }
+  .panel-inner{
+    position:relative;
+    border-radius:16px;
+    overflow:hidden;
+    background:#050409;
+    aspect-ratio:4/3;
+  }
+  video{
+    width:100%; height:100%;
+    object-fit:cover;
+    display:block;
+    transform:scaleX(-1);
+  }
+
+  .bracket{
+    position:absolute;
+    width:26px; height:26px;
+    border:2.5px solid var(--accent-green);
+    opacity:0.85;
+    filter:drop-shadow(0 0 6px rgba(74,255,122,0.6));
+  }
+  .bracket.tl{top:14px; left:14px; border-right:none; border-bottom:none; border-radius:6px 0 0 0;}
+  .bracket.tr{top:14px; right:14px; border-left:none; border-bottom:none; border-radius:0 6px 0 0;}
+  .bracket.bl{bottom:14px; left:14px; border-right:none; border-top:none; border-radius:0 0 0 6px;}
+  .bracket.br{bottom:14px; right:14px; border-left:none; border-top:none; border-radius:0 0 6px 0;}
+
+  .scan-line{
+    position:absolute;
+    left:0; right:0; top:0;
+    height:2px;
+    background:linear-gradient(90deg, transparent, var(--accent-green), transparent);
+    box-shadow:0 0 14px var(--accent-green);
+    opacity:0;
+  }
+  .panel-inner.is-scanning .scan-line{
+    opacity:1;
+    animation:scan-sweep 1.4s ease-in-out infinite;
+  }
+
+  .float-badge{
+    position:absolute;
+    top:-14px;
+    display:flex; align-items:center; gap:8px;
+    background:rgba(13,12,20,0.75);
+    backdrop-filter:blur(10px);
+    border:1px solid var(--glass-border);
+    border-radius:13px;
+    padding:8px 12px;
+    font-size:12px;
+    z-index:2;
+    box-shadow:0 8px 24px rgba(0,0,0,0.35);
+  }
+  .float-badge.left{left:-6px;}
+  .float-badge.right{right:-6px;}
+  .float-badge .icon-chip{
+    width:26px; height:26px;
+    border-radius:8px;
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+  }
+  .float-badge.left .icon-chip{background:rgba(124,58,237,0.25); color:var(--glow-violet);}
+  .float-badge.right .icon-chip{background:rgba(74,255,122,0.2); color:var(--accent-green);}
+  .float-badge .icon-chip svg{width:14px; height:14px;}
+  .float-badge .label{color:var(--text-muted); font-size:10.5px; line-height:1.2;}
+  .float-badge .value{font-weight:700; font-size:12px; color:var(--text-primary);}
+
+  .btn-scan{
+    width:100%;
+    display:flex; align-items:center; justify-content:center; gap:9px;
+    background:linear-gradient(135deg, var(--accent-green), var(--accent-green-deep));
+    color:#06170C;
+    font-family:'Manrope', sans-serif;
+    font-weight:700;
+    font-size:15.5px;
+    border:none;
+    border-radius:14px;
+    padding:16px 20px;
+    cursor:pointer;
+    box-shadow:0 10px 30px -8px rgba(74,255,122,0.55);
+    transition:transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .btn-scan svg{width:18px; height:18px;}
+  .btn-scan:hover{transform:translateY(-1px); box-shadow:0 14px 34px -8px rgba(74,255,122,0.7);}
+  .btn-scan:active{transform:translateY(0);}
+  .btn-scan:disabled{opacity:0.6; cursor:not-allowed; transform:none;}
+  .btn-scan:focus-visible{outline:2px solid var(--accent-green); outline-offset:3px;}
+
+  .status{
+    margin-top:18px;
+    display:flex; align-items:flex-start; gap:12px;
+    background:var(--glass);
+    border:1px solid var(--glass-border);
+    border-radius:14px;
+    padding:14px 16px;
+    opacity:0;
+    transform:translateY(6px);
+    transition:opacity 0.25s ease, transform 0.25s ease, border-color 0.25s ease;
+  }
+  .status.show{opacity:1; transform:translateY(0);}
+  .status .status-icon{
+    width:34px; height:34px;
+    border-radius:10px;
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+  }
+  .status .status-icon svg{width:18px; height:18px;}
+  .status .status-title{font-weight:700; font-size:14px; font-family:'Manrope',sans-serif;}
+  .status .status-sub{font-size:12.5px; color:var(--text-muted); margin-top:2px;}
+
+  .status.idle .status-icon{background:rgba(166,160,184,0.12); color:var(--text-muted);}
+  .status.scanning .status-icon{background:rgba(139,124,246,0.18); color:var(--info);}
+  .status.success{border-color:rgba(74,255,122,0.35);}
+  .status.success .status-icon{background:rgba(74,255,122,0.18); color:var(--accent-green);}
+  .status.already{border-color:rgba(139,124,246,0.35);}
+  .status.already .status-icon{background:rgba(139,124,246,0.18); color:var(--info);}
+  .status.error{border-color:rgba(255,92,122,0.35);}
+  .status.error .status-icon{background:rgba(255,92,122,0.18); color:var(--error);}
+
+  .spin{animation:spin 0.9s linear infinite;}
+
+  @keyframes pulse-dot{0%,100%{opacity:1;} 50%{opacity:0.35;}}
+  @keyframes scan-sweep{0%{top:6%;} 50%{top:92%;} 100%{top:6%;}}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  @keyframes rise-in{from{opacity:0; transform:translateY(14px);} to{opacity:1; transform:translateY(0);}}
+
+  .shell > *{animation:rise-in 0.55s ease both;}
+  .topbar{animation-delay:0s;}
+  .eyebrow{animation-delay:0.05s;}
+  h1{animation-delay:0.1s;}
+  .meta-line{animation-delay:0.15s;}
+  .panel{animation-delay:0.2s;}
+  .btn-scan{animation-delay:0.25s;}
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation:none !important; transition:none !important;}
+  }
+
+  @media (max-width:420px){
+    .float-badge{padding:7px 9px;}
+    .float-badge .value{font-size:11px;}
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-glow"></div>
+<div class="bg-grid"></div>
+
+<div class="shell">
+
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 3 7l9 5 9-5-9-5Z"/><path d="M3 12l9 5 9-5"/></svg>
+      </div>
+      <div class="brand-text">CS Department<span>QUEST · Nawabshah</span></div>
+    </div>
+    <div class="live-pill"><span class="live-dot"></span>Live</div>
+  </div>
+
+  <div class="eyebrow">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M5.6 18.4l2.8-2.8M15.6 8.4l2.8-2.8"/></svg>
+    Face Check-In · Lecture Mode
+  </div>
+
+  <h1>Mark your attendance<br>with a <span class="glow">glance.</span></h1>
+
+  <p class="meta-line">Course: <strong>Computer Networks</strong> · Lecture <strong>#<span id="lectureIdDisplay">1</span></strong></p>
+
+  <div class="panel">
+    <div class="float-badge left">
+      <div class="icon-chip">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7Z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+      </div>
+      <div><div class="label">Camera</div><div class="value">Live</div></div>
+    </div>
+    <div class="float-badge right">
+      <div class="icon-chip">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></svg>
+      </div>
+      <div><div class="label">Liveness</div><div class="value">Secured</div></div>
+    </div>
+
+    <div class="panel-inner" id="panelInner">
+      <video id="video" autoplay playsinline></video>
+      <canvas id="canvas" style="display:none;"></canvas>
+      <div class="bracket tl"></div>
+      <div class="bracket tr"></div>
+      <div class="bracket bl"></div>
+      <div class="bracket br"></div>
+      <div class="scan-line"></div>
+    </div>
+  </div>
+
+  <button class="btn-scan" id="scanBtn" onclick="captureAndSend()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/></svg>
+    Scan &amp; Mark Attendance
+  </button>
+
+  <div class="status idle show" id="statusBox">
+    <div class="status-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l2.5 2.5"/></svg>
+    </div>
+    <div>
+      <div class="status-title">Ready to scan</div>
+      <div class="status-sub">Position your face inside the frame, then tap the button above.</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const urlParams = new URLSearchParams(window.location.search);
+const lectureId = parseInt(urlParams.get('lecture_id')) || 1;
+document.getElementById('lectureIdDisplay').textContent = lectureId; // Testing ke liye hardcoded, baad mein dynamic karenge
+  const video = document.getElementById('video');
+  const canvas = document.getElementById('canvas');
+  const panelInner = document.getElementById('panelInner');
+  const statusBox = document.getElementById('statusBox');
+  const scanBtn = document.getElementById('scanBtn');
+
+  const icons = {
+    scanning: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="spin"><path d="M21 12a9 9 0 1 1-2.64-6.36"/></svg>',
+    success: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8.5 12.5 2.5 2.5 4.5-5"/></svg>',
+    already: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>',
+    error: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.86 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.86a2 2 0 0 0-3.4 0Z"/></svg>'
+  };
+
+  function setStatus(type, title, sub){
+    statusBox.className = 'status show ' + type;
+    const iconMarkup = icons[type] || icons.success;
+    statusBox.querySelector('.status-icon').innerHTML = iconMarkup;
+    statusBox.querySelector('.status-title').textContent = title;
+    statusBox.querySelector('.status-sub').textContent = sub;
+  }
+
+  navigator.mediaDevices.getUserMedia({ video: true })
+    .then(stream => { video.srcObject = stream; })
+    .catch(err => { setStatus('error', 'Camera unavailable', 'Please allow camera access and reload the page.'); });
+
+  function captureAndSend(){
+    scanBtn.disabled = true;
+    panelInner.classList.add('is-scanning');
+    setStatus('scanning', 'Hold still and blink naturally...', 'Capturing for about 2.5 seconds.');
+
+    const frames = [];
+    const context = canvas.getContext('2d');
+    const intervalMs = 130;
+    const captureDurationMs = 2500;
+
+    const captureTimer = setInterval(() => {
+      canvas.width = video.videoWidth || 400;
+      canvas.height = video.videoHeight || 300;
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      frames.push(canvas.toDataURL('image/jpeg', 0.7));
+    }, intervalMs);
+
+    setTimeout(() => {
+      clearInterval(captureTimer);
+      setStatus('scanning', 'Verifying...', 'Checking face match and liveness.');
+
+      fetch('/attendance/recognize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lecture_id: lectureId, images: frames })
+      })
+      .then(res => res.json().then(data => ({ status: res.status, data })))
+      .then(({ status, data }) => {
+        panelInner.classList.remove('is-scanning');
+        scanBtn.disabled = false;
+
+        if (status === 201) {
+          setStatus('success', `Marked present — ${data.student_name}`, `Roll No. ${data.roll_no} · Confidence ${data.confidence}`);
+        } else if (status === 200) {
+          setStatus('already', 'Already marked', data.message);
+        } else {
+          const confInfo = (data.confidence !== undefined) ? ` (confidence score: ${data.confidence})` : '';
+          setStatus('error', 'Could not verify', (data.error || 'Please try again.') + confInfo);
+        }
+      })
+      .catch(err => {
+        panelInner.classList.remove('is-scanning');
+        scanBtn.disabled = false;
+        setStatus('error', 'Connection error', String(err));
+      });
+    }, captureDurationMs);
+  }
+</script>
+
+</body>
+</html>

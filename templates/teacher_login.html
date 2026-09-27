@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Teacher Login · Attendance System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#08070D;
+    --glow-purple:#7C3AED;
+    --glow-violet:#A855F7;
+    --accent-green:#4AFF7A;
+    --accent-green-deep:#22C55E;
+    --glass:rgba(255,255,255,0.05);
+    --glass-border:rgba(255,255,255,0.12);
+    --text-primary:#F4F2FA;
+    --text-muted:#A6A0B8;
+    --error:#FF5C7A;
+    --info:#8B7CF6;
+  }
+
+  *{box-sizing:border-box; margin:0; padding:0;}
+
+  body{
+    background:var(--bg);
+    color:var(--text-primary);
+    font-family:'Inter', sans-serif;
+    min-height:100vh;
+    overflow-x:hidden;
+    position:relative;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  .bg-glow{position:fixed; inset:0; z-index:0; pointer-events:none;}
+  .bg-glow::before, .bg-glow::after{
+    content:""; position:absolute; width:60vw; height:60vw; border-radius:50%;
+    filter:blur(90px); opacity:0.35;
+  }
+  .bg-glow::before{background:var(--glow-purple); top:-20%; right:-10%;}
+  .bg-glow::after{background:var(--accent-green-deep); bottom:-25%; left:-15%; opacity:0.18;}
+  .bg-grid{
+    position:fixed; inset:0; z-index:0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px);
+    background-size:42px 42px;
+    mask-image:radial-gradient(circle at 50% 35%, rgba(0,0,0,0.9), transparent 70%);
+    pointer-events:none;
+  }
+
+  .shell{
+    position:relative; z-index:1;
+    width:100%; max-width:420px;
+    padding:24px;
+  }
+
+  .brand{display:flex; align-items:center; gap:10px; justify-content:center; margin-bottom:28px;}
+  .brand-mark{
+    width:34px; height:34px; border-radius:9px;
+    background:linear-gradient(135deg, var(--glow-purple), var(--accent-green-deep));
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+  .brand-mark svg{width:18px; height:18px; color:#08070D;}
+  .brand-text{font-family:'Manrope', sans-serif; font-weight:700; font-size:14px;}
+  .brand-text span{display:block; font-size:11px; color:var(--text-muted); font-weight:500; font-family:'Inter',sans-serif;}
+
+  .card{
+    background:var(--glass);
+    border:1px solid var(--glass-border);
+    border-radius:20px;
+    padding:32px 28px;
+    backdrop-filter:blur(8px);
+  }
+
+  .eyebrow{
+    display:inline-flex; align-items:center; gap:7px;
+    background:rgba(139,124,246,0.1);
+    border:1px solid rgba(139,124,246,0.3);
+    border-radius:999px;
+    padding:6px 13px 6px 9px;
+    font-size:12.5px; font-weight:600;
+    color:var(--info);
+    margin-bottom:18px;
+  }
+  .eyebrow svg{width:13px; height:13px;}
+
+  h1{
+    font-family:'Manrope', sans-serif;
+    font-weight:800;
+    font-size:26px;
+    line-height:1.2;
+    margin-bottom:6px;
+  }
+  .subtext{color:var(--text-muted); font-size:13.5px; margin-bottom:26px;}
+
+  .field{margin-bottom:16px;}
+  .field label{
+    display:block; font-size:12.5px; font-weight:600;
+    color:var(--text-muted); margin-bottom:7px;
+  }
+  .field-input{
+    position:relative;
+    display:flex; align-items:center;
+    background:rgba(255,255,255,0.04);
+    border:1px solid var(--glass-border);
+    border-radius:12px;
+    padding:0 14px;
+    transition:border-color 0.15s ease, background 0.15s ease;
+  }
+  .field-input:focus-within{
+    border-color:rgba(74,255,122,0.45);
+    background:rgba(255,255,255,0.06);
+  }
+  .field-input svg{width:16px; height:16px; color:var(--text-muted); flex-shrink:0;}
+  .field-input input{
+    flex:1; min-width:0;
+    background:transparent; border:none; outline:none;
+    color:var(--text-primary);
+    font-family:'Inter', sans-serif;
+    font-size:14.5px;
+    padding:13px 10px;
+  }
+  .field-input input::placeholder{color:#5B5670;}
+
+  .btn-login{
+    width:100%;
+    display:flex; align-items:center; justify-content:center; gap:9px;
+    background:linear-gradient(135deg, var(--accent-green), var(--accent-green-deep));
+    color:#06170C;
+    font-family:'Manrope', sans-serif;
+    font-weight:700;
+    font-size:15px;
+    border:none;
+    border-radius:12px;
+    padding:14px 20px;
+    cursor:pointer;
+    margin-top:6px;
+    box-shadow:0 10px 30px -8px rgba(74,255,122,0.5);
+    transition:transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .btn-login svg{width:17px; height:17px;}
+  .btn-login:hover{transform:translateY(-1px); box-shadow:0 14px 34px -8px rgba(74,255,122,0.65);}
+  .btn-login:disabled{opacity:0.6; cursor:not-allowed; transform:none;}
+
+  .status{
+    margin-top:16px;
+    display:flex; align-items:flex-start; gap:11px;
+    background:rgba(255,255,255,0.04);
+    border:1px solid var(--glass-border);
+    border-radius:13px;
+    padding:13px 15px;
+    opacity:0; transform:translateY(6px);
+    transition:opacity 0.25s ease, transform 0.25s ease, border-color 0.25s ease;
+  }
+  .status.show{opacity:1; transform:translateY(0);}
+  .status .status-icon{
+    width:30px; height:30px; border-radius:9px;
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+  .status .status-icon svg{width:16px; height:16px;}
+  .status .status-title{font-weight:700; font-size:13.5px; font-family:'Manrope',sans-serif;}
+  .status .status-sub{font-size:12px; color:var(--text-muted); margin-top:2px;}
+  .status.success{border-color:rgba(74,255,122,0.35);}
+  .status.success .status-icon{background:rgba(74,255,122,0.18); color:var(--accent-green);}
+  .status.error{border-color:rgba(255,92,122,0.35);}
+  .status.error .status-icon{background:rgba(255,92,122,0.18); color:var(--error);}
+  .status.loading .status-icon{background:rgba(139,124,246,0.18); color:var(--info);}
+  .spin{animation:spin 0.9s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  .footnote{
+    text-align:center;
+    font-size:12px;
+    color:var(--text-muted);
+    margin-top:20px;
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-glow"></div>
+<div class="bg-grid"></div>
+
+<div class="shell">
+
+  <div class="brand">
+    <div class="brand-mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 3 7l9 5 9-5-9-5Z"/><path d="M3 12l9 5 9-5"/></svg>
+    </div>
+    <div class="brand-text">CS Department<span>QUEST · Nawabshah</span></div>
+  </div>
+
+  <div class="card">
+    <div class="eyebrow">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      Teacher Portal
+    </div>
+
+    <h1>Welcome back.</h1>
+    <p class="subtext">Sign in to manage lectures and attendance.</p>
+
+    <form id="loginForm">
+      <div class="field">
+        <label for="email">Email</label>
+        <div class="field-input">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 8.97 6a2 2 0 0 0 2.06 0L22 7"/></svg>
+          <input type="email" id="email" placeholder="you@quest.edu.pk" required>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="password">Password</label>
+        <div class="field-input">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <input type="password" id="password" placeholder="••••••••" required>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-login" id="loginBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/></svg>
+        Sign In
+      </button>
+    </form>
+
+    <div class="status" id="statusBox">
+      <div class="status-icon"></div>
+      <div>
+        <div class="status-title"></div>
+        <div class="status-sub"></div>
+      </div>
+    </div>
+  </div>
+
+  <p class="footnote">New faculty? <a href="/teacher/register" style="color:var(--info); text-decoration:none;">Create an account</a></p>
+
+</div>
+
+<script>
+  const form = document.getElementById('loginForm');
+  const loginBtn = document.getElementById('loginBtn');
+  const statusBox = document.getElementById('statusBox');
+
+  const icons = {
+    loading: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="spin"><path d="M21 12a9 9 0 1 1-2.64-6.36"/></svg>',
+    success: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8.5 12.5 2.5 2.5 4.5-5"/></svg>',
+    error: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.86 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.86a2 2 0 0 0-3.4 0Z"/></svg>'
+  };
+
+  function setStatus(type, title, sub){
+    statusBox.className = 'status show ' + type;
+    statusBox.querySelector('.status-icon').innerHTML = icons[type] || '';
+    statusBox.querySelector('.status-title').textContent = title;
+    statusBox.querySelector('.status-sub').textContent = sub;
+  }
+
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+
+    loginBtn.disabled = true;
+    setStatus('loading', 'Signing in...', 'Please wait.');
+
+    fetch('/login/teacher', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    })
+    .then(res => res.json().then(data => ({ status: res.status, data })))
+    .then(({ status, data }) => {
+      loginBtn.disabled = false;
+      if (status === 200) {
+        localStorage.setItem('teacher_token', data.token);
+        localStorage.setItem('teacher_name', data.teacher.name);
+        localStorage.setItem('teacher_id', data.teacher.id);
+        localStorage.setItem('teacher_role', data.teacher.role || 'teacher');
+        const destination = (data.teacher.role === 'admin') ? '/admin/dashboard' : '/teacher/dashboard';
+        setStatus('success', `Welcome, ${data.teacher.name}`, 'Redirecting to your dashboard...');
+        setTimeout(() => { window.location.href = destination; }, 900);
+      } else {
+        setStatus('error', 'Login failed', data.error || 'Please check your credentials.');
+      }
+    })
+    .catch(err => {
+      loginBtn.disabled = false;
+      setStatus('error', 'Connection error', String(err));
+    });
+  });
+</script>
+
+</body>
+</html>
