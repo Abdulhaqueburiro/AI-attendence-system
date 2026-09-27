@@ -1,8 +1,9 @@
 flask
-opencv-contrib-python-headless
-mediapipe
+opencv-contrib-python-headless==4.8.1.78
+mediapipe==0.10.9
 PyJWT
 werkzeug
 mysql-connector-python
 numpy
 anthropic
+gunicorn
